@@ -1,1 +1,8 @@
-{"name":"repoe","private":true,"type":"module","scripts":{"test":"node --test tests/catalog.test.mjs"}}
+{
+  "name": "repoe",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs"
+  }
+}
