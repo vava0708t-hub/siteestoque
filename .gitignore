@@ -5,3 +5,12 @@ node_modules/
 .env.*
 !.env.example
 *.log
+
+.vercel
+.env*
+
+dist/vendor/
+dist/workbox-v*/
+dist/workbox-sw.js
+dist/sw.js
+scripts/sw-generated.js

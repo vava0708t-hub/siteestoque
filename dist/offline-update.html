@@ -1,0 +1,12 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Atualizar lista offline</title><style>body{font:18px system-ui;background:#101c24;color:#edf7ff;margin:0;padding:24px}main{max-width:540px;margin:10vh auto;padding:28px;background:#192b37;border:1px solid #385565;border-radius:20px}p{line-height:1.6}button,a{background:#52d2ad;color:#102a24;padding:12px 18px;border:0;border-radius:10px;display:inline-block;text-decoration:none;font:inherit;cursor:pointer}</style></head><body><main><h1>Atualizando a lista offline</h1><p id="status" role="status">Mantenha a conexão com a internet enquanto a nova versão é preparada. Seu catálogo e rascunho serão preservados.</p><button id="retry" hidden>Tentar novamente</button><p><a href="/">Voltar ao site</a></p></main><script>
+async function update(){const status=document.getElementById('status'),retry=document.getElementById('retry');retry.hidden=true;
+try{if(!('serviceWorker' in navigator))throw new Error('Este navegador não oferece suporte ao modo offline.');
+const registration=await navigator.serviceWorker.register('/sw.js',{updateViaCache:'none'});await registration.update();
+await new Promise((resolve,reject)=>{let worker;const timeout=setTimeout(()=>{cleanup();reject(new Error('A atualização demorou. Confira a internet e tente novamente.'));},45000);
+function cleanup(){clearTimeout(timeout);registration.removeEventListener('updatefound',check);worker?.removeEventListener('statechange',check);}
+function check(){const next=registration.installing||registration.waiting||registration.active;if(next!==worker){worker?.removeEventListener('statechange',check);worker=next;worker?.addEventListener('statechange',check);}if(worker?.state==='activated'){cleanup();resolve();}else if(worker?.state==='redundant'){cleanup();reject(new Error('Não foi possível instalar a atualização. Tente novamente.'));}}
+registration.addEventListener('updatefound',check);check();});
+status.textContent='Atualização concluída. Abrindo sua lista…';location.replace(new URLSearchParams(location.search).get('return')==='site'?'/':'/offline.html');
+}catch(error){status.textContent=error.message||'Não foi possível atualizar. Confira a conexão e tente novamente.';retry.hidden=false;}}
+document.getElementById('retry').onclick=update;update();
+</script></body></html>
