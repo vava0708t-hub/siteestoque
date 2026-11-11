@@ -242,3 +242,5 @@ body[data-view=labels] #work-grid,body[data-view=labels] .stats,body[data-view=l
 .pl-flag{flex:1;min-width:0;white-space:nowrap;overflow:hidden;padding-right:1mm}
 .promo-label:not(.no-off) .pl-flag{padding-right:calc(14mm*var(--k))}
 .pl-manual{font-weight:900;color:inherit}
+.report-actions{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px}.report-actions p{margin:0}
+.report-negative td small{display:block;margin-top:3px;overflow-wrap:anywhere}.report-negative td.stock-negative{color:#ff8f8f;font-weight:700;white-space:nowrap}.report-stat-alert strong{color:#ff8f8f}

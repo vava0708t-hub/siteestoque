@@ -23,7 +23,7 @@ const catalogSettings=createCatalogSettings(()=>({client,profile,notify:toast}),
 const navigation=setupNavigation();
 const quote=setupQuote(()=>products);
 const labels=setupLabels(()=>products);
-const reports=setupReports(()=>({client,session,profile}));
+const reports=setupReports(()=>({client,session,profile,products}));
 const help=setupHelp(view=>{history.replaceState(null,'','#'+view);navigation.show(view);});
 const lookup=setupLookup(()=>products,(product,detail)=>{if(!profile?.active)return;const add=el('button','Adicionar ao orçamento','secondary lookup-quote');add.type='button';add.onclick=()=>{if(quote.add(product)){add.textContent='✓ No orçamento';toast(product.nome+' adicionado ao orçamento.');}};const tag=el('button','Criar etiqueta de oferta','secondary lookup-quote');tag.type='button';tag.onclick=()=>{if(labels.add(product)){tag.textContent='✓ Etiqueta criada';toast('Etiqueta de '+product.nome+' criada na aba Etiquetas.');}};detail.append(add,tag);});
 const busy = value => $('loading').classList.toggle('finished', !value);
