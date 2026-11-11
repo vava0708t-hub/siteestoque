@@ -21,7 +21,7 @@ let client, session, profile, products = [], requests = [], signup = false;
 const listController = createListController(() => ({client,session,profile,barcodeFor:item=>itemBarcode(products,item),stockFor:item=>itemStockLabel(products,item),stockNegative:item=>itemStockNegative(products,item),hasProducts:()=>products.length>0,brands:()=>catalogSettings.brands(),aisles:()=>catalogSettings.aisles()}));
 const catalogSettings=createCatalogSettings(()=>({client,profile,notify:toast}),()=>listController.render());
 const navigation=setupNavigation();
-const quote=setupQuote(()=>products);
+const quote=setupQuote(()=>products,()=>({client,session,profile}));
 const labels=setupLabels(()=>products);
 const reports=setupReports(()=>({client,session,profile,products}));
 const help=setupHelp(view=>{history.replaceState(null,'','#'+view);navigation.show(view);});

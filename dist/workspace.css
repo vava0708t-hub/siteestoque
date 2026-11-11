@@ -244,3 +244,14 @@ body[data-view=labels] #work-grid,body[data-view=labels] .stats,body[data-view=l
 .pl-manual{font-weight:900;color:inherit}
 .report-actions{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px}.report-actions p{margin:0}
 .report-negative td small{display:block;margin-top:3px;overflow-wrap:anywhere}.report-negative td.stock-negative{color:#ff8f8f;font-weight:700;white-space:nowrap}.report-stat-alert strong{color:#ff8f8f}
+.quote-side .quote-actions{grid-template-columns:1fr 1fr}.quote-side .quote-save-button{grid-column:1/-1}
+.quote-saved-badge{color:#8ce6c6;margin:0}.quote-saved-badge.pending{color:#f2cf83}
+.quote-saved-panel{margin-top:28px;border-top:1px solid #2c3f4b;padding-top:20px}
+.quote-saved-search{max-width:420px;margin:10px 0 0}.quote-saved-search input{width:100%}
+.quote-saved-list{display:grid;gap:10px;margin-top:8px}
+.quote-saved-row{display:flex;justify-content:space-between;align-items:center;gap:14px;border:1px solid #2c3f4b;border-radius:12px;padding:12px 14px;background:#15232c}
+.quote-saved-row.current{border-color:#55d6b0;box-shadow:0 0 0 2px #55d6b022}
+.quote-saved-text{display:flex;flex-direction:column;gap:3px;min-width:0}.quote-saved-text strong{overflow-wrap:anywhere}.quote-saved-text .small{margin:0}
+.quote-expiry{color:#8ce6c6}.quote-expiry.soon{color:#f2cf83;font-weight:700}
+.quote-saved-actions{display:flex;gap:8px;flex:none}
+@media(max-width:700px){.quote-saved-row{flex-direction:column;align-items:stretch}.quote-saved-actions{display:grid;grid-template-columns:1fr 1fr 1fr}.quote-saved-actions button{min-height:44px}}

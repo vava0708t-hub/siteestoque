@@ -18,17 +18,25 @@ export function quoteSummary(quote){
  const items=quoteTotals(quote.items),general=generalDiscountCents(items.total,quote.discount);
  return {subtotal:items.subtotal,itemDiscount:items.discount,generalDiscount:general,discount:items.discount+general,total:items.total-general};
 }
-export const emptyQuote=()=>({items:[],customer:'',phone:'',document:'',notes:'',validity:7,discount:{type:'percent',value:0}});
+export const emptyQuote=()=>({savedId:null,savedNumber:null,createdAt:null,expiresAt:null,items:[],customer:'',phone:'',document:'',notes:'',validity:7,discount:{type:'percent',value:0}});
 export function restoreQuote(saved){
  const quote=emptyQuote();if(!saved||!Array.isArray(saved.items)||saved.items.length>100)return quote;
  quoteTotals(saved.items);quote.items=saved.items;
  for(const [field,max] of [['customer',120],['phone',30],['document',30],['notes',500]])quote[field]=String(saved[field]||'').slice(0,max);
  const validity=Number(saved.validity);quote.validity=Number.isInteger(validity)&&validity>=0&&validity<=90?validity:7;
  if(saved.discount){const discount={type:saved.discount.type==='value'?'value':'percent',value:Number(saved.discount.value)||0};try{generalDiscountCents(quoteTotals(quote.items).total,discount);quote.discount=discount;}catch{}}
+ if(/^[0-9a-f-]{36}$/i.test(saved.savedId||'')&&Number.isSafeInteger(Number(saved.savedNumber))){quote.savedId=saved.savedId;quote.savedNumber=Number(saved.savedNumber);quote.createdAt=validDate(saved.createdAt);quote.expiresAt=validDate(saved.expiresAt);}
  return quote;
 }
-export function quoteMarkup(quote,preparedBy){const sums=quoteSummary(quote),e=escapeHtml,issued=new Date();
+const validDate=value=>value&&Number.isFinite(Date.parse(value))?String(value):null;
+// Data de validade impressa: conta a partir da criação do orçamento salvo (ou de agora).
+export function quoteValidUntil(quote,now=new Date()){if(!(quote.validity>0))return null;const base=quote.createdAt?new Date(quote.createdAt):now;return new Date(base.getTime()+quote.validity*86400000);}
+// Converte uma linha da tabela saved_quotes no formato do editor.
+export function quoteFromSaved(row){return restoreQuote({items:row.items,customer:row.customer,phone:row.phone,document:row.document,notes:row.notes,validity:row.validity,discount:row.discount,savedId:row.id,savedNumber:row.number,createdAt:row.created_at,expiresAt:row.expires_at});}
+// Dados enviados para salvar.
+export function quotePayload(quote){return {items:quote.items,customer:quote.customer,phone:quote.phone,document:quote.document,notes:quote.notes,validity:quote.validity,discount:quote.discount,total:quoteSummary(quote).total};}
+export function quoteMarkup(quote,preparedBy){const sums=quoteSummary(quote),e=escapeHtml,issued=quote.createdAt?new Date(quote.createdAt):new Date();
  const customer=[quote.customer||'Não informado',quote.phone&&'Tel.: '+quote.phone,quote.document&&'CPF/CNPJ: '+quote.document].filter(Boolean).map(e).join(' · ');
- const validUntil=quote.validity>0?new Date(issued.getTime()+quote.validity*86400000).toLocaleDateString('pt-BR'):null;
+ const validUntil=quoteValidUntil(quote)?.toLocaleDateString('pt-BR')||null;
  const generalLabel=quote.discount?.type==='percent'?' ('+e(String(quote.discount.value).replace('.',','))+'%)':'';
- return '<div class="print-heading"><img class="print-logo" src="assets/logo.png" alt="Logo da loja"><h1>Orçamento</h1></div><p><strong>Cliente:</strong> '+customer+'</p><p><strong>Preparado por:</strong> '+e(preparedBy)+'</p><p><strong>Emitido em:</strong> '+e(issued.toLocaleString('pt-BR'))+(validUntil?' · <strong>Válido até:</strong> '+e(validUntil):'')+'</p><table><thead><tr><th>Produto / código</th><th>Qtd. / un.</th><th>Preço unit.</th><th>Desconto</th><th>Total</th></tr></thead><tbody>'+quote.items.map(item=>'<tr><td>'+e(item.name)+'<br>Cód. '+e(item.code)+'</td><td>'+e(item.quantity.toLocaleString('pt-BR'))+' '+e(item.unit)+'</td><td>'+money(item.price)+'</td><td>'+e(item.discount)+'%</td><td>'+money(quoteAmounts(item).total)+'</td></tr>').join('')+'</tbody></table><p>Subtotal: '+money(sums.subtotal)+(sums.itemDiscount?' · Descontos nos itens: '+money(sums.itemDiscount):'')+(sums.generalDiscount?' · Desconto geral'+generalLabel+': '+money(sums.generalDiscount):'')+'</p><h2>Total: '+money(sums.total)+'</h2>'+(quote.notes?'<p><strong>Observação:</strong> '+e(quote.notes)+'</p>':'')+'<p>Preços da planilha na consulta de cada produto. Orçamento sujeito à confirmação de valores e disponibilidade na loja. Não reserva nem movimenta estoque.</p>';}
+ return '<div class="print-heading"><img class="print-logo" src="assets/logo.png" alt="Logo da loja"><h1>Orçamento'+(quote.savedNumber?' nº '+e(quote.savedNumber):'')+'</h1></div><p><strong>Cliente:</strong> '+customer+'</p><p><strong>Preparado por:</strong> '+e(preparedBy)+'</p><p><strong>Emitido em:</strong> '+e(issued.toLocaleString('pt-BR'))+(validUntil?' · <strong>Válido até:</strong> '+e(validUntil):'')+'</p><table><thead><tr><th>Produto / código</th><th>Qtd. / un.</th><th>Preço unit.</th><th>Desconto</th><th>Total</th></tr></thead><tbody>'+quote.items.map(item=>'<tr><td>'+e(item.name)+'<br>Cód. '+e(item.code)+'</td><td>'+e(item.quantity.toLocaleString('pt-BR'))+' '+e(item.unit)+'</td><td>'+money(item.price)+'</td><td>'+e(item.discount)+'%</td><td>'+money(quoteAmounts(item).total)+'</td></tr>').join('')+'</tbody></table><p>Subtotal: '+money(sums.subtotal)+(sums.itemDiscount?' · Descontos nos itens: '+money(sums.itemDiscount):'')+(sums.generalDiscount?' · Desconto geral'+generalLabel+': '+money(sums.generalDiscount):'')+'</p><h2>Total: '+money(sums.total)+'</h2>'+(quote.notes?'<p><strong>Observação:</strong> '+e(quote.notes)+'</p>':'')+'<p>Preços da planilha na consulta de cada produto. Orçamento sujeito à confirmação de valores e disponibilidade na loja. Não reserva nem movimenta estoque.</p>';}
