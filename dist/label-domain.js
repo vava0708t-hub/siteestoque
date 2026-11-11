@@ -41,15 +41,26 @@ export const paymentModes = {
  avista: 'À vista',
  pix: 'À vista no Pix ou dinheiro',
  debito: 'No dinheiro, Pix ou débito',
- parcelado: 'Parcelado sem juros no cartão',
+ parcelado: 'Parcelado sem juros no cartão (até 6x)',
  custom: 'Outra condição'
 };
+
+// Regras da loja para parcelar: até 6x e parcela mínima de R$ 30,00.
+export const MAX_INSTALLMENTS = 6;
+export const MIN_INSTALLMENT = 3000;
+export const clampInstallments = value => Math.min(MAX_INSTALLMENTS, Math.max(2, Math.trunc(Number(value) || MAX_INSTALLMENTS)));
+
+// Quantas parcelas cabem neste preço respeitando o limite escolhido e a parcela mínima.
+export function installmentsFor(promo, chosen) {
+ return Math.min(clampInstallments(chosen), Math.floor(promo / MIN_INSTALLMENT));
+}
 
 export function paymentText(payment, promo) {
  const mode = payment?.mode in paymentModes ? payment.mode : 'pix';
  if (mode === 'custom') return String(payment.text || '').trim().slice(0, 80) || 'Consulte as condições';
  if (mode === 'parcelado') {
-  const n = Math.min(12, Math.max(2, Math.trunc(Number(payment.installments) || 3)));
+  const n = installmentsFor(promo, payment.installments);
+  if (n < 2) return 'À vista';
   return 'Em até ' + n + 'x de ' + brl(Math.ceil(promo / n)) + ' sem juros no cartão';
  }
  return paymentModes[mode];
@@ -81,14 +92,14 @@ export const labelThemes = {
  minimal: { name: 'Preto e branco (economiza tinta)', title: 'OFERTA' }
 };
 
-export const emptyLabels = () => ({ items: [], discount: 10, rounding: '99', payment: { mode: 'pix', installments: 3, text: '' }, validUntil: '', layout: '8', theme: 'classico', showPercent: true });
+export const emptyLabels = () => ({ items: [], discount: 10, rounding: '99', payment: { mode: 'pix', installments: 6, text: '' }, validUntil: '', layout: '8', theme: 'classico', showPercent: true });
 
 export function restoreLabels(saved) {
  const state = emptyLabels();
  if (!saved || typeof saved !== 'object') return state;
  if (Number(saved.discount) > 0 && Number(saved.discount) < 100) state.discount = Number(saved.discount);
  if (saved.rounding in roundingModes) state.rounding = saved.rounding;
- if (saved.payment && saved.payment.mode in paymentModes) state.payment = { mode: saved.payment.mode, installments: Math.min(12, Math.max(2, Math.trunc(Number(saved.payment.installments) || 3))), text: String(saved.payment.text || '').slice(0, 80) };
+ if (saved.payment && saved.payment.mode in paymentModes) state.payment = { mode: saved.payment.mode, installments: clampInstallments(saved.payment.installments), text: String(saved.payment.text || '').slice(0, 80) };
  if (/^\d{4}-\d{2}-\d{2}$/.test(saved.validUntil || '')) state.validUntil = saved.validUntil;
  if (saved.layout === '4') state.layout = '4';
  if (saved.theme in labelThemes) state.theme = saved.theme;

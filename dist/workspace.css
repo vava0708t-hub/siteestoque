@@ -239,3 +239,6 @@ body[data-view=labels] #work-grid,body[data-view=labels] .stats,body[data-view=l
 .theme-minimal .pl-to{color:#151515}.theme-minimal .pl-int{text-shadow:none}
 .theme-minimal .pl-from s{text-decoration-color:#151515}
 .theme-minimal .pl-pay{background:#fff;color:#151515;border:.4mm solid #151515}
+.pl-flag{flex:1;min-width:0;white-space:nowrap;overflow:hidden;padding-right:1mm}
+.promo-label:not(.no-off) .pl-flag{padding-right:calc(14mm*var(--k))}
+.pl-manual{font-weight:900;color:inherit}

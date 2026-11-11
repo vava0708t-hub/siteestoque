@@ -1,4 +1,4 @@
-import { roundingModes, paymentModes, labelThemes, promoPrice, effectiveDiscount, paymentText, brl, priceParts, labelFromProduct, emptyLabels, restoreLabels } from './label-domain.js';
+import { roundingModes, paymentModes, labelThemes, clampInstallments, promoPrice, effectiveDiscount, paymentText, brl, priceParts, labelFromProduct, emptyLabels, restoreLabels } from './label-domain.js';
 import { barcodeSvg } from './barcode.js';
 import { priceCents, escapeHtml } from './quote-domain.js';
 import { lookupMatches } from './lookup.js';
@@ -20,8 +20,17 @@ export function labelMarkup(item, state) {
   + '<div class="pl-to"><span class="pl-por">POR</span><span class="pl-cur">R$</span><span class="pl-int' + (parts.whole.length >= 5 ? ' pl-int-s' : parts.whole.length >= 3 ? ' pl-int-m' : '') + '">' + e(parts.whole) + '</span><span class="pl-cents">' + e(parts.cents) + '<small>' + e(item.unit) + '</small></span></div></div>'
   + '<div class="pl-pay">' + e(paymentText(state.payment, item.promo)) + '</div>'
   + '<div class="pl-foot">' + (barcodeSvg(item.barcode) ? '<div class="pl-code">' + barcodeSvg(item.barcode) + '<span>' + e(item.barcode) + '</span></div>' : '<span></span>')
-  + '<span class="pl-meta">Cód. ' + e(item.code) + (state.validUntil ? '<br>' + e(validLabel(state.validUntil)) : '') + '</span></div>'
+  + '<span class="pl-meta">Cód. ' + e(item.code) + (item.manual ? '<br><b class="pl-manual">Valor promocional manual</b>' : '') + (state.validUntil ? '<br>' + e(validLabel(state.validUntil)) : '') + '</span></div>'
   + '</article>';
+}
+
+// Diminui o título (OFERTA, APROVEITE…) até caber na faixa da etiqueta.
+export function fitLabels(root) {
+ for (const flag of root.querySelectorAll('.pl-flag')) {
+  flag.style.fontSize = '';
+  let size = parseFloat(getComputedStyle(flag).fontSize), min = size * .35;
+  while (flag.scrollWidth > flag.clientWidth + 1 && size > min) { size *= .94; flag.style.fontSize = size + 'px'; }
+ }
 }
 
 export function labelPages(state) {
@@ -66,6 +75,7 @@ export function setupLabels(getProducts = () => []) {
    button.onclick = () => { if (add(product)) { resetSearch(); $('labels-search').focus(); } };
    root.append(button);
   }
+  fitLabels(root);
  }
 
  function recalc(item) { if (!item.manual) item.promo = promoPrice(item.price, item.discount, item.rounding); }
@@ -99,6 +109,7 @@ export function setupLabels(getProducts = () => []) {
   const count = state.items.reduce((sum, i) => sum + i.copies, 0), perPage = state.layout === '4' ? 4 : 8;
   $('labels-preview').className = 'labels-preview layout-' + state.layout;
   $('labels-preview').innerHTML = state.items.map(item => labelMarkup(item, state)).join('');
+  fitLabels($('labels-preview'));
   $('labels-total').textContent = count ? count + (count === 1 ? ' etiqueta' : ' etiquetas') + ' · ' + Math.ceil(count / perPage) + (Math.ceil(count / perPage) === 1 ? ' folha A4' : ' folhas A4') : '';
   $('labels-print').disabled = $('labels-clear').disabled = !count || !profile?.active;
   themes();
@@ -147,7 +158,7 @@ export function setupLabels(getProducts = () => []) {
   save(); render(); say(skipped ? skipped + ' etiqueta(s) não puderam usar esse desconto.' : 'Desconto e arredondamento aplicados a todas as etiquetas.');
  };
  $('labels-payment').onchange = () => { state.payment.mode = $('labels-payment').value; fillSettings(); save(); preview(); };
- $('labels-installments').onchange = () => { const v = Math.trunc(Number($('labels-installments').value)); state.payment.installments = Math.min(12, Math.max(2, v || 3)); $('labels-installments').value = state.payment.installments; save(); preview(); };
+ $('labels-installments').onchange = () => { const v = Math.trunc(Number($('labels-installments').value)); state.payment.installments = clampInstallments(v); $('labels-installments').value = state.payment.installments; save(); preview(); };
  $('labels-payment-text').oninput = () => { state.payment.text = $('labels-payment-text').value.slice(0, 80); save(); preview(); };
  $('labels-valid').onchange = () => { state.validUntil = $('labels-valid').value; save(); preview(); };
  $('labels-layout').onchange = () => { state.layout = $('labels-layout').value === '4' ? '4' : '8'; save(); preview(); };
@@ -166,6 +177,7 @@ export function setupLabels(getProducts = () => []) {
    root = document.createElement('section'); root.id = 'print-list'; root.className = 'label-print layout-' + state.layout;
    root.innerHTML = labelPages(state).map(page => '<div class="label-page">' + page.map(item => labelMarkup(item, state)).join('') + '</div>').join('');
    document.body.append(root); document.title = 'Etiquetas de oferta';
+   root.style.cssText = 'display:block;position:absolute;left:-10000px;top:0;width:210mm'; fitLabels(root); root.style.cssText = '';
    window.addEventListener('afterprint', cleanup);
    await Promise.all([...root.querySelectorAll('img')].map(img => img.decode().catch(() => {})));
    window.print(); button.disabled = false;

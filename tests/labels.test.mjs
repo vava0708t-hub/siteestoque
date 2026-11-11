@@ -23,13 +23,18 @@ test('arredondamento escolhe o final mais próximo e nunca chega ao preço norma
 });
 test('condição de pagamento e partes do preço',()=>{
  assert.equal(paymentText({mode:'pix'},1099),'À vista no Pix ou dinheiro');
- assert.match(paymentText({mode:'parcelado',installments:3},1099),/^Em até 3x de R\$\s3,67 sem juros no cartão$/);
+ assert.equal(paymentText({mode:'parcelado',installments:6},5999),'À vista','abaixo de R$ 60 não parcela');
+ assert.match(paymentText({mode:'parcelado',installments:6},6000),/^Em até 2x de R\$\s30,00 sem juros no cartão$/);
+ assert.match(paymentText({mode:'parcelado',installments:6},12990),/^Em até 4x de R\$\s32,48 sem juros/);
+ assert.match(paymentText({mode:'parcelado',installments:6},99900),/^Em até 6x de R\$\s166,50/);
+ assert.match(paymentText({mode:'parcelado',installments:12},99900),/^Em até 6x/,'nunca passa de 6x');
+ assert.match(paymentText({mode:'parcelado',installments:3},99900),/^Em até 3x/);
  assert.equal(paymentText({mode:'custom',text:'  Só no boleto '},1099),'Só no boleto');
  assert.deepEqual(priceParts(123499),{whole:'1.234',cents:',99'});
 });
 test('etiquetas salvas são restauradas com limites',()=>{
  const s=restoreLabels({discount:20,rounding:'90',layout:'4',validUntil:'2026-12-01',payment:{mode:'parcelado',installments:40},items:[{id:'a',code:'1',name:'A',price:1000,promo:900,discount:10,rounding:'x',copies:99},{id:'b',code:'2',name:'B',price:1000,promo:1000}]});
- assert.equal(s.items.length,1);assert.equal(s.items[0].copies,50);assert.equal(s.items[0].rounding,'none');assert.equal(s.payment.installments,12);assert.equal(s.layout,'4');
+ assert.equal(s.items.length,1);assert.equal(s.items[0].copies,50);assert.equal(s.items[0].rounding,'none');assert.equal(s.payment.installments,6);assert.equal(s.layout,'4');
  assert.deepEqual(restoreLabels(null),emptyLabels());
 });
 test('código de barras EAN-13, EAN-8, UPC-A e Code 128',()=>{
@@ -46,4 +51,10 @@ test('modelo e porcentagem são salvos e valores inválidos voltam ao padrão',(
  assert.ok(Object.keys(labelThemes).length>=7);
  const s=restoreLabels({theme:'black',showPercent:false});assert.equal(s.theme,'black');assert.equal(s.showPercent,false);
  const d=restoreLabels({theme:'inexistente',showPercent:'nao'});assert.equal(d.theme,'classico');assert.equal(d.showPercent,true);
+});
+test('etiqueta indica valor promocional manual só quando digitado à mão',async()=>{
+ const {labelMarkup}=await import('../dist/labels-ui.js');
+ const item={id:'1',code:'283',barcode:'',name:'Papel',unit:'UN',price:3270,promo:2470,manual:true,copies:1},state={payment:{mode:'pix'},theme:'classico',showPercent:true};
+ assert.ok(labelMarkup(item,state).includes('Valor promocional manual'));
+ assert.ok(!labelMarkup({...item,manual:false},state).includes('Valor promocional manual'));
 });
