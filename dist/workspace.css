@@ -361,3 +361,14 @@ body[data-view=labels] #work-grid,body[data-view=labels] .stats,body[data-view=l
 .layout-4 .theme-carnaval .pl-deal-save,.layout-6 .theme-carnaval .pl-deal-save{background:none}
 .layout-4 .theme-carnaval .pl-deal-save b,.layout-6 .theme-carnaval .pl-deal-save b{color:#7b2cbf}
 .layout-6 .pl-deal{margin-top:calc(1.4mm*var(--k))}.layout-6 .pl-deal-pct b{font-size:calc(8.4mm*var(--k))}.layout-6 .theme-saojoao .pl-name{margin-top:calc(4mm*var(--k))}
+/* ----- Preço cresce para ocupar o espaço livre (--p calculado no fitLabels) ----- */
+.pl-prices{--p:1;--pf:calc(1 + (var(--p) - 1) * .6)}
+.pl-prices .pl-int{font-size:calc(19mm*var(--k)*var(--p))}
+.pl-prices .pl-int.pl-int-m{font-size:calc(15mm*var(--k)*var(--p))}
+.pl-prices .pl-int.pl-int-s{font-size:calc(11.5mm*var(--k)*var(--p))}
+.pl-prices .pl-cents{font-size:calc(8mm*var(--k)*var(--p));margin-top:calc(.8mm*var(--k)*var(--p))}
+.pl-prices .pl-cents small{font-size:calc(2.6mm*var(--k)*var(--pf));margin-top:calc(1.4mm*var(--k)*var(--p))}
+.pl-prices .pl-cur{font-size:calc(5mm*var(--k)*var(--p));margin-top:calc(1.4mm*var(--k)*var(--p))}
+.pl-prices .pl-por{font-size:calc(3.1mm*var(--k)*var(--pf))}
+.pl-prices .pl-from{font-size:calc(2.8mm*var(--k)*var(--pf))}
+.pl-prices .pl-from s{font-size:calc(4.2mm*var(--k)*var(--pf))}

@@ -32,6 +32,26 @@ export function fitLabels(root) {
   let size = parseFloat(getComputedStyle(flag).fontSize), min = size * .2;
   while (flag.scrollWidth > flag.clientWidth + 1 && size > min) { size *= .94; flag.style.fontSize = size + 'px'; }
  }
+ for (const label of root.querySelectorAll('.promo-label')) fitPrice(label);
+}
+
+// Ajusta agora e de novo depois que o navegador termina de medir emojis e fontes.
+export function settleFit(root) { fitLabels(root); requestAnimationFrame(() => fitLabels(root)); setTimeout(() => fitLabels(root), 300); }
+
+// Aumenta o preço (--p) até ocupar o espaço livre, sem encostar no nome/desconto nem passar da borda.
+function fitPrice(label) {
+ const prices = label.querySelector('.pl-prices'), to = label.querySelector('.pl-to'), foot = label.querySelector('.pl-foot');
+ if (!prices || !to || !foot) return;
+ const above = label.querySelector('.pl-deal') || label.querySelector('.pl-name');
+ const fits = () => {
+  const box = label.getBoundingClientRect(), gap = box.height * .015;
+  return foot.getBoundingClientRect().bottom <= box.bottom + .5 && to.getBoundingClientRect().right <= box.right - gap && prices.scrollWidth <= prices.clientWidth + 1 && prices.getBoundingClientRect().top >= above.getBoundingClientRect().bottom + gap;
+ };
+ let low = 1, high = 2.4;
+ prices.style.setProperty('--p', '1');
+ if (!fits()) return;
+ for (let i = 0; i < 7; i++) { const mid = (low + high) / 2; prices.style.setProperty('--p', String(mid)); if (fits()) low = mid; else high = mid; }
+ prices.style.setProperty('--p', String(low));
 }
 
 export function labelPages(state) {
@@ -110,7 +130,7 @@ export function setupLabels(getProducts = () => []) {
   const count = state.items.reduce((sum, i) => sum + i.copies, 0), perPage = perPageFor(state.layout);
   $('labels-preview').className = 'labels-preview layout-' + state.layout;
   $('labels-preview').innerHTML = state.items.map(item => labelMarkup(item, state)).join('');
-  fitLabels($('labels-preview'));
+  settleFit($('labels-preview'));
   $('labels-total').textContent = count ? count + (count === 1 ? ' etiqueta' : ' etiquetas') + ' · ' + Math.ceil(count / perPage) + (Math.ceil(count / perPage) === 1 ? ' folha A4' : ' folhas A4') : '';
   $('labels-print').disabled = $('labels-clear').disabled = !count || !profile?.active;
   themes();
@@ -128,7 +148,7 @@ export function setupLabels(getProducts = () => []) {
    button.onclick = () => { state.theme = value; save(); preview(); };
    root.append(button);
   }
-  fitLabels(root);
+  settleFit(root);
  }
  // Emojis dos títulos sazonais podem carregar depois: ajusta de novo quando as fontes chegam.
  const refit = () => { fitLabels($('labels-preview')); fitLabels($('labels-themes')); };
