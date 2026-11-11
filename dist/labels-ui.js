@@ -1,4 +1,4 @@
-import { roundingModes, paymentModes, labelThemes, labelLayouts, perPageFor, clampInstallments, promoPrice, effectiveDiscount, paymentText, brl, priceParts, labelFromProduct, emptyLabels, restoreLabels } from './label-domain.js';
+import { paymentModes, labelThemes, labelLayouts, perPageFor, clampInstallments, promoPrice, effectiveDiscount, paymentText, brl, priceParts, labelFromProduct, emptyLabels, restoreLabels } from './label-domain.js';
 import { barcodeSvg } from './barcode.js';
 import { priceCents, escapeHtml } from './quote-domain.js';
 import { lookupMatches } from './lookup.js';
@@ -70,7 +70,6 @@ export function setupLabels(getProducts = () => []) {
  const say = text => { $('labels-message').textContent = text; };
  const save = () => { try { localStorage.setItem(key(), JSON.stringify(state)); } catch { say('Não foi possível guardar as etiquetas neste navegador.'); } };
 
- for (const [value, mode] of Object.entries(roundingModes)) $('labels-rounding').add(new Option(mode.label, value));
  for (const [value, label] of Object.entries(paymentModes)) $('labels-payment').add(new Option(label, value));
  $('labels-layout').replaceChildren(); for (const [value, layout] of Object.entries(labelLayouts)) $('labels-layout').add(new Option(layout.name, value));
 
@@ -99,7 +98,7 @@ export function setupLabels(getProducts = () => []) {
   }
  }
 
- function recalc(item) { if (!item.manual) item.promo = promoPrice(item.price, item.discount, item.rounding); }
+ function recalc(item) { if (!item.manual) item.promo = promoPrice(item.price, item.discount); }
 
  function row(item) {
   const card = el('article', '', 'label-row'), head = el('div', '', 'label-row-head');
@@ -110,14 +109,11 @@ export function setupLabels(getProducts = () => []) {
   const refresh = () => { promo.textContent = brl(item.promo); real.textContent = 'Desconto real ' + fmtPct(effectiveDiscount(item.price, item.promo)); priceInput.value = (item.promo / 100).toFixed(2); manualTag.hidden = !item.manual; save(); preview(); };
   const field = (label, input) => { const wrap = el('label', label); wrap.append(input); fields.append(wrap); return input; };
   const discount = field('Desconto (%)', Object.assign(document.createElement('input'), { type: 'number', min: 0.01, max: 99.99, step: 0.01, value: item.discount }));
-  const rounding = field('Arredondar', document.createElement('select'));
-  for (const [value, mode] of Object.entries(roundingModes)) rounding.add(new Option(mode.label, value)); rounding.value = item.rounding;
   const priceInput = field('Preço da oferta (R$)', Object.assign(document.createElement('input'), { type: 'number', min: 0.01, step: 0.01, value: (item.promo / 100).toFixed(2) }));
   const copies = field('Cópias', Object.assign(document.createElement('input'), { type: 'number', min: 1, max: 50, step: 1, value: item.copies }));
   const manualTag = el('span', 'Preço digitado à mão', 'label-manual'); manualTag.hidden = !item.manual;
   const update = (apply, input) => { try { apply(); refresh(); say(''); } catch (error) { say(error.message); input.value = input === priceInput ? (item.promo / 100).toFixed(2) : input === discount ? item.discount : input.value; } };
-  discount.onchange = () => update(() => { const v = Number(discount.value); promoPrice(item.price, v, item.rounding); item.discount = v; item.manual = false; recalc(item); }, discount);
-  rounding.onchange = () => update(() => { item.rounding = rounding.value; item.manual = false; recalc(item); }, rounding);
+  discount.onchange = () => update(() => { const v = Number(discount.value); promoPrice(item.price, v); item.discount = v; item.manual = false; recalc(item); }, discount);
   priceInput.onchange = () => update(() => { const v = Math.round(Number(priceInput.value) * 100); if (!Number.isSafeInteger(v) || v <= 0 || v >= item.price) throw new Error('O preço da oferta precisa ficar entre R$ 0,01 e o preço normal.'); item.promo = v; item.manual = true; }, priceInput);
   copies.onchange = () => update(() => { const v = Math.trunc(Number(copies.value)); if (!(v >= 1 && v <= 50)) throw new Error('Cópias de 1 a 50.'); item.copies = v; }, copies);
   const remove = el('button', 'Remover', 'ghost danger'); remove.type = 'button'; remove.setAttribute('aria-label', 'Remover etiqueta de ' + item.name);
@@ -163,7 +159,7 @@ export function setupLabels(getProducts = () => []) {
  }
 
  function fillSettings() {
-  $('labels-discount').value = state.discount; $('labels-rounding').value = state.rounding;
+  $('labels-discount').value = state.discount;
   $('labels-payment').value = state.payment.mode; $('labels-installments').value = state.payment.installments; $('labels-payment-text').value = state.payment.text;
   $('labels-valid').value = state.validUntil; $('labels-layout').value = state.layout; $('labels-show-percent').checked = state.showPercent !== false;
   $('labels-installments-wrap').hidden = state.payment.mode !== 'parcelado'; $('labels-payment-text-wrap').hidden = state.payment.mode !== 'custom';
@@ -177,11 +173,10 @@ export function setupLabels(getProducts = () => []) {
   $('labels-search').focus();
  };
  $('labels-discount').onchange = () => { const v = Number($('labels-discount').value); if (!(v > 0 && v < 100)) { say('Desconto padrão entre 0,01% e 99,99%.'); $('labels-discount').value = state.discount; return; } state.discount = v; save(); };
- $('labels-rounding').onchange = () => { state.rounding = $('labels-rounding').value; save(); };
  $('labels-apply').onclick = () => {
   let skipped = 0;
-  for (const item of state.items) { try { item.promo = promoPrice(item.price, state.discount, state.rounding); item.discount = state.discount; item.rounding = state.rounding; item.manual = false; } catch { skipped++; } }
-  save(); render(); say(skipped ? skipped + ' etiqueta(s) não puderam usar esse desconto.' : 'Desconto e arredondamento aplicados a todas as etiquetas.');
+  for (const item of state.items) { try { item.promo = promoPrice(item.price, state.discount); item.discount = state.discount; item.manual = false; } catch { skipped++; } }
+  save(); render(); say(skipped ? skipped + ' etiqueta(s) não puderam usar esse desconto.' : 'Desconto aplicado a todas as etiquetas.');
  };
  $('labels-payment').onchange = () => { state.payment.mode = $('labels-payment').value; fillSettings(); save(); preview(); };
  $('labels-installments').onchange = () => { const v = Math.trunc(Number($('labels-installments').value)); state.payment.installments = clampInstallments(v); $('labels-installments').value = state.payment.installments; save(); preview(); };
