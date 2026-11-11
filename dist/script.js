@@ -4,6 +4,7 @@ import {setupReports} from './reports.js';
 import {setupHelp} from './help.js';
 import {playBeep} from './beep.js';
 import './hero-scanner.js';
+import './login-fx.js';
 import { setupLookup } from './lookup.js';
 import { setupCamera } from './camera.js';
 import { stockLabel, itemBarcode, itemStockLabel, isNegativeStock, itemStockNegative } from './stock.js';
@@ -31,6 +32,7 @@ function mode(value) {
  $('auth-title').textContent = value ? 'Faça parte da equipe.' : 'Bom ter você por aqui.';
  $('auth-submit').textContent = value ? 'Criar minha conta →' : 'Entrar na minha conta →';
  $('password').autocomplete = value ? 'new-password' : 'current-password';
+ document.dispatchEvent(new CustomEvent('auth:mode', { detail: value }));
 }
 $('login-tab').onclick = () => mode(false); $('signup-tab').onclick = () => mode(true);
 function clearSession() { camera.close(); navigation.configure(null);quote.configure(null,null);reports.configure(null,null); listController.reset(); session = profile = null; requests = []; products = []; lookup.reset(); $('requests').replaceChildren(); $('admin-users').replaceChildren(); $('workspace').hidden = true; $('auth').hidden = false; $('logout').hidden = true; $('settings-toggle').hidden = true; $('account-panel').open = false; $('profile-form').reset(); $('password-form').reset(); }
@@ -89,9 +91,9 @@ $('auth-form').onsubmit = async event => {
  }
  if (result.error) throw result.error;
  $('password').value = '';
- if (result.data.session) { await showSession(result.data.session); toast('Você entrou.'); }
- else { toast('Conta criada. Entre com seu usuário e senha. O administrador liberará as solicitações.'); mode(false); }
- } catch(error) { fail(error); } finally { $('auth-submit').disabled = false; busy(false); }
+ if (result.data.session) { document.dispatchEvent(new CustomEvent('auth:success')); await showSession(result.data.session); toast('Você entrou.'); }
+ else { document.dispatchEvent(new CustomEvent('auth:success')); toast('Conta criada. Entre com seu usuário e senha. O administrador liberará as solicitações.'); mode(false); }
+ } catch(error) { document.dispatchEvent(new CustomEvent('auth:error')); fail(error); } finally { $('auth-submit').disabled = false; busy(false); }
 };
 $('logout').onclick = async () => { $('logout').disabled = true; try { const { error } = await client.auth.signOut(); if (error) throw error; clearSession(); } catch(error) { fail(error); } finally { $('logout').disabled = false; } };
 const productDialog=$('product-confirm');
