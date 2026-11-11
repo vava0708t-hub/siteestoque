@@ -143,6 +143,7 @@ test('PostgreSQL: migração, envio atômico, reenvio e permissões',async()=>{
  await assert.rejects(()=>db.query('select public.set_restock_quantity($1,4)',[partItem]));
  assert.equal((await db.query('select separating_by from public.restock_lists where id=$1',[partial])).rows[0].separating_by,stock);
  await db.exec('reset role');await db.exec(await readFile(new URL('../supabase/015_confirm_without_item_state.sql',import.meta.url),'utf8'));
+ await db.exec(await readFile(new URL('../supabase/016_remove_users.sql',import.meta.url),'utf8'));
  const quick='60000000-0000-4000-8000-000000000002';await actor(seller);await submit(quick,[{...item,quantity:3},{...item,product_code:'0002',quantity:5}]);
  await actor(stock);const [second]=(await db.query('select id from public.restock_requests where list_id=$1 and product_code=$2',[quick,'0002'])).rows;
  await db.query('select public.set_restock_quantity($1,2)',[second.id]);await db.query('select public.mark_restock_list_ready($1)',[quick]);

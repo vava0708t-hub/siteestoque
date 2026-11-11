@@ -3,13 +3,33 @@ export default async function handler(req, res) {
  try {
   const api = prepare(req, res);
   const user = await authenticate(api, req);
-  if (['admin-profile','admin-password'].includes(req.body.action)) {
+  if (['admin-profile','admin-password','admin-remove'].includes(req.body.action)) {
    const actor=await api.request('/rest/v1/profiles?id=eq.'+user.id+'&select=role,active&limit=1');
    if(!actor.ok||actor.data?.[0]?.role!=='admin'||actor.data[0].active!==true)throw new HttpError(403,'Somente administradores ativos podem editar usuários.');
    const id=req.body.targetId;
    if(typeof id!=='string'||!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))throw new HttpError(400,'Usuário inválido.');
-   const target=await api.request('/rest/v1/profiles?id=eq.'+id+'&select=username&limit=1');
+   const target=await api.request('/rest/v1/profiles?id=eq.'+id+'&select=username,removed_at&limit=1');
    if(!target.ok||!target.data?.length)throw new HttpError(404,'Usuário não encontrado.');
+   if(target.data[0].removed_at)throw new HttpError(404,'Usuário não encontrado.');
+   if(req.body.action==='admin-remove'){
+    if(id===user.id)throw new HttpError(400,'Você não pode remover a própria conta.');
+    let used=false;
+    for(const path of ['/rest/v1/restock_lists?or=(created_by.eq.'+id+',ready_by.eq.'+id+',separating_by.eq.'+id+')&select=id&limit=1','/rest/v1/restock_requests?or=(created_by.eq.'+id+',completed_by.eq.'+id+')&select=id&limit=1']){
+     const refs=await api.request(path);
+     if(!refs.ok)throw new HttpError(503,'Não foi possível verificar o histórico do usuário.');
+     if(refs.data?.length)used=true;
+    }
+    if(!used){
+     const removed=await api.request('/auth/v1/admin/users/'+id,{method:'DELETE'});
+     if(removed.ok)return res.status(200).json({message:'Usuário removido.'});
+    }
+    // Com histórico: arquiva o perfil, libera o login e bloqueia a conta.
+    const archived=await api.request('/rest/v1/profiles?id=eq.'+id,{method:'PATCH',body:{active:false,removed_at:new Date().toISOString(),username:'removido-'+id.replace(/-/g,'').slice(0,20)}});
+    if(!archived.ok)throw new HttpError(archived.data?.code==='PGRST204'?503:400,archived.data?.code==='PGRST204'?'Execute a migração 016_remove_users.sql no Supabase para remover usuários com histórico.':'Não foi possível remover o usuário.');
+    const banned=await api.request('/auth/v1/admin/users/'+id,{method:'PUT',body:{ban_duration:'876000h'}});
+    if(!banned.ok)throw new HttpError(400,'O acesso foi retirado, mas não foi possível bloquear o login. Tente remover novamente.');
+    return res.status(200).json({message:'Usuário removido. As listas dele continuam no histórico.'});
+   }
    if(req.body.action==='admin-profile'){
     const username=normalizeUsername(req.body.username),name=req.body.name;
     if(!usernameValid(username)||typeof name!=='string'||!name.trim()||name.trim().length>100)throw new HttpError(400,'Confira o nome e o login.');

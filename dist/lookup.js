@@ -10,7 +10,6 @@ export function setupLookup(getProducts,onSelect=()=>{}){
  const $=id=>document.getElementById(id),el=(tag,text,css)=>{const n=document.createElement(tag);n.textContent=text;if(css)n.className=css;return n;};
  function reset(){ $('lookup-results').replaceChildren();$('lookup-detail').replaceChildren();$('lookup-code').value='';$('lookup-status').textContent=getProducts().length?'Dados da última atualização da planilha.':'Catálogo indisponível. Clique em Atualizar lista.'; }
  function select(p){
-  onSelect(p);
   $('lookup-results').replaceChildren();const detail=$('lookup-detail');detail.replaceChildren();
   detail.append(el('h3',p.nome),el('p','Código: '+p.codigo+' · Barras: '+(p.codigo_barras||'Não informado'),'muted small'));
   const grid=el('dl','','lookup-values');
@@ -19,6 +18,7 @@ export function setupLookup(getProducts,onSelect=()=>{}){
   }
   detail.append(grid,el('span',promotionLabel(p.promocao),'badge '+(p.promocao==='S'?'done':'')));
   $('lookup-status').textContent='Produto consultado. Valores conforme a última leitura da planilha.';
+  onSelect(p,detail);
  }
  function results(matches){
   $('lookup-detail').replaceChildren();$('lookup-results').replaceChildren();

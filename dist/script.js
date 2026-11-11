@@ -9,6 +9,7 @@ import { setupCamera } from './camera.js';
 import { stockLabel, itemBarcode, itemStockLabel, isNegativeStock, itemStockNegative } from './stock.js';
 import { createCatalogSettings } from './settings-ui.js';
 import { createListController } from './lists-ui.js';
+import { createUsersAdmin } from './users-ui.js';
 import { config } from './config.js';
 import { loadCatalog } from './catalog.js';
 import { toast } from './toast.js';
@@ -18,10 +19,10 @@ let client, session, profile, products = [], requests = [], signup = false;
 const listController = createListController(() => ({client,session,profile,barcodeFor:item=>itemBarcode(products,item),stockFor:item=>itemStockLabel(products,item),stockNegative:item=>itemStockNegative(products,item),hasProducts:()=>products.length>0,brands:()=>catalogSettings.brands(),aisles:()=>catalogSettings.aisles()}));
 const catalogSettings=createCatalogSettings(()=>({client,profile,notify:toast}),()=>listController.render());
 const navigation=setupNavigation();
-const quote=setupQuote();
+const quote=setupQuote(()=>products);
 const reports=setupReports(()=>({client,session,profile}));
 const help=setupHelp(view=>{history.replaceState(null,'','#'+view);navigation.show(view);});
-const lookup=setupLookup(()=>products,product=>quote.select(product));
+const lookup=setupLookup(()=>products,(product,detail)=>{if(!profile?.active)return;const add=el('button','Adicionar ao orçamento','secondary lookup-quote');add.type='button';add.onclick=()=>{if(quote.add(product)){add.textContent='✓ No orçamento';toast(product.nome+' adicionado ao orçamento.');}};detail.append(add);});
 const busy = value => $('loading').classList.toggle('finished', !value);
 const fail = error => toast(error.message || 'Não foi possível concluir.', 'error');
 function mode(value) {
@@ -60,7 +61,7 @@ async function fetchProducts() {
  $('product-count').textContent = products.length;
  $('catalog-status').textContent = products.length ? 'Bipe o código ou selecione um produto da planilha.' : 'A planilha ainda não tem produtos.';
  } catch(error) { $('catalog-updated').textContent='Falha na leitura da planilha. Atualize para tentar novamente.'; products = []; $('product').value='';closeSuggestions(); $('product-count').textContent = '—'; $('catalog-status').textContent = error.message; }
- $('request-submit').disabled = !products.length; listController.renderDraft(); listController.render(); lookup.reset();quote.select(null);
+ $('request-submit').disabled = !products.length; listController.renderDraft(); listController.render(); lookup.reset();quote.refresh();
 }
 async function fetchRequests() { await listController.load(); }
 function el(tag, text, css) { const node = document.createElement(tag); node.textContent = text; if (css) node.className = css; return node; }
@@ -173,28 +174,9 @@ $('product-search').onkeydown=event=>{
 };
 $('product-search').addEventListener('blur',closeSuggestions);
 document.addEventListener('click',event=>{if(!event.target.closest('.product-autocomplete'))closeSuggestions();});
-async function fetchUsers() {
- $('admin-users').replaceChildren();
- if (!profile?.active || profile.role !== 'admin') return;
- const { data, error } = await client.from('profiles').select('*').order('name'); if (error) throw error;
- data.forEach(user => {
- const row = el('article', '', 'user-row'), info = el('div', '');
- info.append(el('strong', user.name), el('p', '@' + user.username + ' · Solicitou: ' + user.requested_role, 'muted'));
- const label = el('label', 'Perfil'), select = document.createElement('select'); roles.forEach(role => select.add(new Option(role, role))); select.value = user.role; label.append(select);
- const access = el('label', 'Acesso'), active = document.createElement('select'); active.add(new Option('Aprovado', 'true')); active.add(new Option('Pendente / bloqueado', 'false')); active.value = String(user.active); access.append(active);
- const save = el('button', 'Salvar acesso', 'secondary');
- select.disabled = active.disabled = save.disabled = user.id === session.user.id;
- save.onclick = async () => { save.disabled = true; try { const { error } = await client.rpc('admin_set_access', { target_id: user.id, new_role: select.value, new_active: active.value === 'true' }); if (error) throw error; toast('Acesso atualizado.'); await fetchUsers(); } catch(error) { fail(error); } finally { save.disabled = false; } };
- row.append(info, label, access, save);
- const editor=el('details','','admin-user-editor');editor.append(el('summary','Editar nome, login e senha'));
- const form=document.createElement('form'),nameLabel=el('label','Nome'),nameInput=document.createElement('input'),loginLabel=el('label','Login'),loginInput=document.createElement('input');
- nameInput.value=user.name;nameInput.required=true;nameInput.maxLength=100;nameLabel.append(nameInput);loginInput.value=user.username;loginInput.required=true;loginInput.minLength=3;loginInput.maxLength=30;loginInput.autocapitalize='none';loginLabel.append(loginInput);const profileSave=el('button','Salvar cadastro','primary');profileSave.type='submit';form.append(nameLabel,loginLabel,profileSave);
- form.onsubmit=async event=>{event.preventDefault();profileSave.disabled=true;try{const result=await accountRequest({action:'admin-profile',targetId:user.id,name:nameInput.value.trim(),username:loginInput.value.trim()});toast(result.message);if(user.id===session.user.id){profile.name=nameInput.value.trim();profile.username=loginInput.value.trim().toLowerCase();$('identity').textContent=profile.name+' / '+profile.role.toUpperCase();}await fetchUsers();}catch(error){fail(error);}finally{profileSave.disabled=false;}};
- const passwordForm=document.createElement('form'),pwLabel=el('label','Nova senha'),pw=document.createElement('input'),confirmLabel=el('label','Confirmar nova senha'),confirmation=document.createElement('input');for(const input of [pw,confirmation]){input.type='password';input.autocomplete='new-password';input.minLength=6;input.maxLength=128;input.required=true;}pwLabel.append(pw);confirmLabel.append(confirmation);const reset=el('button','Redefinir senha','secondary');reset.type='submit';passwordForm.append(pwLabel,confirmLabel,reset);
- passwordForm.onsubmit=async event=>{event.preventDefault();if(pw.value!==confirmation.value)return toast('As senhas não conferem.','error');reset.disabled=true;try{const result=await accountRequest({action:'admin-password',targetId:user.id,newPassword:pw.value});passwordForm.reset();toast(result.message);}catch(error){fail(error);}finally{reset.disabled=false;}};
- editor.append(form,passwordForm);row.append(editor);$('admin-users').append(row);
- });
-}
+const usersAdmin = createUsersAdmin(() => ({ client, session, profile, toast, fail, accountRequest,
+ onSelfUpdated(name, username) { profile.name = name; profile.username = username; $('identity').textContent = profile.name + ' / ' + profile.role.toUpperCase(); } }));
+function fetchUsers() { return usersAdmin.load(); }
 async function accountRequest(body) {
  const { data, error } = await client.auth.getSession();
  if (error || !data.session) throw new Error('Entre novamente para editar sua conta.');

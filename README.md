@@ -145,3 +145,9 @@ Execute `supabase/014_report_summaries.sql` após 013. A limpeza semanal salva t
 
 ## Confirmação sem marcar item a item
 Execute supabase/015_confirm_without_item_state.sql após a 014 antes de publicar. Os botões Separado e Em falta foram removidos. Estoquista/admin só usam Confirmar lista pronta, que finaliza a lista e a envia ao histórico. Itens sem quantidade informada são registrados como separados por completo; quantidades parciais salvas em Quantidade separada continuam valendo e aparecem como falta.
+
+## Tela de equipe e remoção de usuários
+Execute supabase/016_remove_users.sql após a 015 antes de publicar. A tela Equipe e permissões mostra resumo (total, com acesso, aguardando/bloqueados), busca por nome ou login e filtros por situação e perfil. Cadastros sem acesso aparecem primeiro, com botão para aprovar no perfil solicitado. Cada cartão permite alterar perfil e acesso, editar nome, login e senha e remover o usuário (com confirmação). Usuário sem listas ou pedidos é excluído de vez; usuário com histórico é arquivado: perde o acesso, o login fica livre para novo cadastro e a conta é bloqueada no Supabase Auth, mas o nome continua nas listas antigas. O administrador não pode remover a própria conta.
+
+## Aba Orçamentos
+O orçamento saiu da Consulta produtos e virou a aba Orçamentos no menu. Ela tem busca própria (bipe ou digitação; bipar o mesmo produto soma a quantidade), itens com quantidade e desconto %, desconto geral em % ou R$ aplicado depois dos descontos por item, dados do cliente (nome, telefone, CPF/CNPJ), validade (sem, 3, 7, 15 ou 30 dias) e observação. O rascunho fica salvo no navegador por usuário até clicar em Novo orçamento. Na Consulta produtos, o produto consultado tem o botão Adicionar ao orçamento. A impressão/PDF mostra contato do cliente, descontos separados e data de validade. Não exige migração.

@@ -19,5 +19,8 @@
     "tesseract.js": "7.0.0",
     "workbox-build": "7.4.1",
     "workbox-sw": "7.4.1"
+  },
+  "overrides": {
+    "glob": "^14.0.4"
   }
 }
