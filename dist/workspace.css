@@ -255,3 +255,61 @@ body[data-view=labels] #work-grid,body[data-view=labels] .stats,body[data-view=l
 .quote-expiry{color:#8ce6c6}.quote-expiry.soon{color:#f2cf83;font-weight:700}
 .quote-saved-actions{display:flex;gap:8px;flex:none}
 @media(max-width:700px){.quote-saved-row{flex-direction:column;align-items:stretch}.quote-saved-actions{display:grid;grid-template-columns:1fr 1fr 1fr}.quote-saved-actions button{min-height:44px}}
+
+/* ===== Como usar: tour com a Caixinha ===== */
+.sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.guide-topics{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 12px;margin-bottom:14px;scrollbar-width:thin}
+.guide-chip{display:flex;align-items:center;gap:6px;flex:none;padding:8px 12px;border-radius:999px;border:1px solid #2c3f4b;background:#14222b;color:#c9d6df;font-size:13px;cursor:pointer;transition:transform .2s,border-color .2s,background .2s}
+.guide-chip:hover{transform:translateY(-2px);border-color:#4a7383}
+.guide-chip.done:after{content:"✓";color:#55d6b0;font-weight:800;margin-left:2px}
+.guide-chip.active{background:linear-gradient(135deg,#255046,#253a52);border-color:#55d6b0;color:#fff;box-shadow:0 4px 14px #0006}
+.guide-chip .chip-icon{font-size:15px}
+.guide-stage{display:grid;grid-template-columns:220px minmax(0,1fr);gap:34px;align-items:center;min-height:360px}
+.guide-stage:before{content:"";position:absolute;width:420px;height:420px;left:-120px;top:-120px;border-radius:50%;background:radial-gradient(#55d6b033,transparent 65%);animation:guide-glow 6s ease-in-out infinite alternate;pointer-events:none}
+.guide-stage.mood-party:before{background:radial-gradient(#ffd40033,transparent 65%)}
+@keyframes guide-glow{to{transform:translate(60px,40px) scale(1.15)}}
+.guide-left{display:flex;justify-content:center;align-items:center;position:relative;min-height:240px}
+.guide-mascot{scale:1.55;margin:0}
+.guide-mascot.enter .mascot-body{animation:guide-enter .7s cubic-bezier(.3,1.5,.5,1)}
+@keyframes guide-enter{0%{transform:translateY(-60px) scale(.6) rotate(-12deg);opacity:0}60%{transform:translateY(6px) scaleY(.9)}100%{transform:none;opacity:1}}
+.guide-mascot.jump .mascot-body{animation:mascot-jump .8s cubic-bezier(.3,1.4,.5,1)}
+.guide-prop{position:absolute;right:-18px;top:-16px;z-index:3;font-size:30px;filter:drop-shadow(0 4px 6px #0007);animation:prop-pop .6s .25s cubic-bezier(.3,1.6,.5,1) both,prop-bob 2.6s 1s ease-in-out infinite}
+@keyframes prop-pop{from{transform:scale(0) rotate(-40deg);opacity:0}to{transform:none;opacity:1}}
+@keyframes prop-bob{50%{transform:translateY(-6px) rotate(8deg)}}
+.guide-mascot.mood-wave .mascot-hand.right{animation:wave 1.1s ease-in-out infinite;transform-origin:20% 80%}
+@keyframes wave{0%,100%{transform:translate(16px,-22px) rotate(-10deg)}50%{transform:translate(16px,-22px) rotate(28deg)}}
+.guide-mascot.mood-think .mascot-eye i{translate:2px -3px}
+.guide-mascot.mood-think .mascot-mouth{width:10px;margin-left:-5px;border-radius:0 0 8px 8px}
+.guide-mascot.mood-happy .mascot-mouth,.guide-mascot.mood-party .mascot-mouth{width:22px;height:12px;margin-left:-11px;background:#10202a}
+.guide-mascot.mood-party .mascot-body{animation:mascot-happy .6s ease-in-out infinite}
+.guide-mascot.mood-party .mascot-hand.left{transform:translate(-2px,-34px) rotate(-30deg)}.guide-mascot.mood-party .mascot-hand.right{transform:translate(2px,-34px) rotate(30deg)}
+.guide-right{position:relative;min-width:0}
+.guide-right h2{margin:6px 0 14px}
+.guide-bubble{position:relative;background:#e6edf3;color:#10202a;border-radius:18px;padding:16px 20px;box-shadow:0 10px 30px #0006;animation:bubble-in .45s cubic-bezier(.3,1.4,.5,1)}
+.guide-bubble:before{content:"";position:absolute;left:-12px;top:28px;border:12px solid transparent;border-right-color:#e6edf3;border-left:0}
+@keyframes bubble-in{from{transform:translateX(-14px) scale(.96);opacity:0}to{transform:none;opacity:1}}
+.bubble-text{margin:0;font-size:17px;line-height:1.6;min-height:3.2em;cursor:pointer}
+.bubble-text.typing:after{content:"▍";color:#2f9f7f;animation:caret .7s steps(1) infinite;margin-left:1px}
+@keyframes caret{50%{opacity:0}}
+.guide-tips{list-style:none;padding:0;margin:16px 0 0;display:grid;gap:8px}
+.guide-tips li{position:relative;padding:9px 12px 9px 36px;border-radius:12px;background:#14222b;border:1px solid #2c3f4b;color:#d0dde7;font-size:14px;animation:tip-in .5s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(.5s + var(--i) * .12s)}
+.guide-tips li:before{content:"💡";position:absolute;left:11px;top:8px;font-size:14px}
+@keyframes tip-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.guide-dots{display:flex;gap:6px;margin:20px 0 14px;flex-wrap:wrap}
+.guide-dots i{width:9px;height:9px;border-radius:999px;background:#2c3f4b;transition:all .3s}
+.guide-dots i.past{background:#2f9f7f}.guide-dots i.on{width:26px;background:linear-gradient(90deg,#55d6b0,#9fd0ff)}
+.guide-stage .guide-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-start}
+.guide-stage .guide-actions .primary{margin-left:auto}
+.guide-confetti{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:5}
+.guide-confetti i{position:absolute;left:var(--x);top:-12px;width:8px;height:12px;border-radius:2px;background:var(--c);animation:confetti-fall var(--d) var(--delay) cubic-bezier(.2,.6,.4,1) forwards}
+@keyframes confetti-fall{to{transform:translateY(520px) rotate(var(--r));opacity:0}}
+.guide-demo{position:relative;overflow:hidden}
+.guide-practice{display:flex;gap:8px;margin:6px 0 12px;flex-wrap:wrap}
+.practice-step{display:flex;align-items:center;gap:8px;padding:6px 12px 6px 6px;border-radius:999px;background:#14222b;border:1px solid #2c3f4b;color:#a6b8c7;transition:all .3s}
+.practice-step b{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:#20313e;font-size:12px}
+.practice-step.now{border-color:#55d6b0;color:#fff;animation:step-pulse 1.4s ease-in-out infinite}
+.practice-step.now b{background:#55d6b0;color:#10202a}
+.practice-step.done{color:#8ce6c6}.practice-step.done b{background:#2f9f7f;color:#fff}
+@keyframes step-pulse{50%{box-shadow:0 0 0 5px #55d6b022}}
+@media(max-width:760px){.guide-stage{grid-template-columns:1fr;gap:10px;min-height:0}.guide-left{min-height:170px}.guide-mascot{scale:1.2}.guide-bubble:before{left:50%;top:-12px;margin-left:-12px;border:12px solid transparent;border-bottom-color:#e6edf3;border-top:0}.guide-stage .guide-actions button{flex:1}.guide-stage .guide-actions .primary{margin-left:0}}
+@media(prefers-reduced-motion:reduce){.guide-stage *,.guide-stage:before,.guide-demo *{animation:none!important}.guide-tips li{opacity:1}}
