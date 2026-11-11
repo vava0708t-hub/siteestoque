@@ -55,6 +55,6 @@ test('modelo e porcentagem são salvos e valores inválidos voltam ao padrão',(
 test('etiqueta indica valor promocional manual só quando digitado à mão',async()=>{
  const {labelMarkup}=await import('../dist/labels-ui.js');
  const item={id:'1',code:'283',barcode:'',name:'Papel',unit:'UN',price:3270,promo:2470,manual:true,copies:1},state={payment:{mode:'pix'},theme:'classico',showPercent:true};
- assert.ok(labelMarkup(item,state).includes('Valor promocional manual'));
- assert.ok(!labelMarkup({...item,manual:false},state).includes('Valor promocional manual'));
+ assert.ok(labelMarkup(item,state).includes('class="pl-manual"'));
+ assert.ok(!labelMarkup({...item,manual:false},state).includes('class="pl-manual"'));
 });

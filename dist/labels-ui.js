@@ -20,7 +20,7 @@ export function labelMarkup(item, state) {
   + '<div class="pl-to"><span class="pl-por">POR</span><span class="pl-cur">R$</span><span class="pl-int' + (parts.whole.length >= 5 ? ' pl-int-s' : parts.whole.length >= 3 ? ' pl-int-m' : '') + '">' + e(parts.whole) + '</span><span class="pl-cents">' + e(parts.cents) + '<small>' + e(item.unit) + '</small></span></div></div>'
   + '<div class="pl-pay">' + e(paymentText(state.payment, item.promo)) + '</div>'
   + '<div class="pl-foot">' + (barcodeSvg(item.barcode) ? '<div class="pl-code">' + barcodeSvg(item.barcode) + '<span>' + e(item.barcode) + '</span></div>' : '<span></span>')
-  + '<span class="pl-meta">Cód. ' + e(item.code) + (item.manual ? '<br><b class="pl-manual">Valor promocional manual</b>' : '') + (state.validUntil ? '<br>' + e(validLabel(state.validUntil)) : '') + '</span></div>'
+  + '<span class="pl-meta">Cód. ' + e(item.code) + (item.manual ? '<br><b class="pl-manual">Manual</b>' : '') + (state.validUntil ? '<br>' + e(validLabel(state.validUntil)) : '') + '</span></div>'
   + '</article>';
 }
 
