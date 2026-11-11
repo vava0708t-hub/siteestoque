@@ -181,11 +181,10 @@ body[data-view=labels] #work-grid,body[data-view=labels] .stats,body[data-view=l
 
 /* ----- Sem porcentagem ----- */
 .promo-label.no-off .pl-name{margin-right:calc(3.5mm*var(--k))}
-.pl-flag-long{font-size:calc(5mm*var(--k))!important;letter-spacing:.1mm!important}
+.promo-label .pl-flag-long{font-size:calc(5mm*var(--k));letter-spacing:.1mm}
 
 /* ----- Modelos ----- */
 /* Amarelo destaque */
-.promo-label.theme-amarelo{background:#ffd400}
 .theme-amarelo .pl-top{background:#151515}
 .theme-amarelo .pl-top:after{background:#d7141f}
 .theme-amarelo .pl-flag{color:#ffd400;text-shadow:none}
@@ -195,27 +194,8 @@ body[data-view=labels] #work-grid,body[data-view=labels] .stats,body[data-view=l
 .theme-amarelo .pl-pay{background:#d7141f;color:#fff}
 .theme-amarelo .pl-meta{color:#4a4000}
 
-/* Verde fresco */
-.theme-verde .pl-top{background:linear-gradient(100deg,#0f7a43,#1fae5c 70%,#5ccf6b)}
-.theme-verde .pl-flag{text-shadow:0 .5mm 0 #075230}
-.theme-verde .pl-off{color:#0f7a43}
-.theme-verde .pl-to,.theme-verde .pl-from s{color:#0f7a43}.theme-verde .pl-from s{text-decoration-color:#0f7a43}
-.theme-verde .pl-pay{background:#0b4d2c;color:#fff}
 
-/* Azul confiança */
-.theme-azul .pl-top{background:linear-gradient(100deg,#0b3f8a,#1565d8 65%,#2f8cf0)}
-.theme-azul .pl-flag{text-shadow:0 .5mm 0 #062a5c}
-.theme-azul .pl-off{color:#0b4ea2}
-.theme-azul .pl-to{color:#0b4ea2}.theme-azul .pl-from s{text-decoration-color:#0b4ea2}
-.theme-azul .pl-pay{background:#0b2e5c;color:#ffd400}
 
-/* Queima de estoque */
-.theme-queima .pl-top{background:linear-gradient(100deg,#c62800,#ff6a00 55%,#ffb000)}
-.theme-queima .pl-top:after{background:#151515}
-.theme-queima .pl-flag{text-shadow:0 .5mm 0 #7a1800}
-.theme-queima .pl-off{background:#151515;color:#ffb000;box-shadow:0 .8mm 0 #000,0 1.4mm 3mm #0004}
-.theme-queima .pl-to{color:#e04e00}.theme-queima .pl-int{text-shadow:0 .5mm 0 #ffd27a}
-.theme-queima .pl-pay{background:#e04e00;color:#fff}
 
 /* Black Friday */
 .promo-label.theme-black{background:#111;color:#fff}
@@ -230,15 +210,6 @@ body[data-view=labels] #work-grid,body[data-view=labels] .stats,body[data-view=l
 .theme-black .pl-pay{background:#f5c84c;color:#000}
 .theme-black .pl-code{color:#fff}.theme-black .pl-meta{color:#aaa}
 
-/* Preto e branco (economiza tinta) */
-.theme-minimal .pl-top{background:#fff;border-bottom:.8mm solid #151515}
-.theme-minimal .pl-top:after{display:none}
-.theme-minimal .pl-logo-wrap{box-shadow:none;padding:0}
-.theme-minimal .pl-flag{color:#151515;text-shadow:none;font-style:normal;transform:none;letter-spacing:1mm}
-.theme-minimal .pl-off{background:#fff;color:#151515;border:.6mm solid #151515;box-shadow:none;transform:none}
-.theme-minimal .pl-to{color:#151515}.theme-minimal .pl-int{text-shadow:none}
-.theme-minimal .pl-from s{text-decoration-color:#151515}
-.theme-minimal .pl-pay{background:#fff;color:#151515;border:.4mm solid #151515}
 .pl-flag{flex:1;min-width:0;white-space:nowrap;overflow:hidden;padding-right:1mm}
 .promo-label:not(.no-off) .pl-flag{padding-right:calc(14mm*var(--k))}
 .pl-manual{font-weight:900;color:inherit}
@@ -313,3 +284,80 @@ body[data-view=labels] #work-grid,body[data-view=labels] .stats,body[data-view=l
 @keyframes step-pulse{50%{box-shadow:0 0 0 5px #55d6b022}}
 @media(max-width:760px){.guide-stage{grid-template-columns:1fr;gap:10px;min-height:0}.guide-left{min-height:170px}.guide-mascot{scale:1.2}.guide-bubble:before{left:50%;top:-12px;margin-left:-12px;border:12px solid transparent;border-bottom-color:#e6edf3;border-top:0}.guide-stage .guide-actions button{flex:1}.guide-stage .guide-actions .primary{margin-left:0}}
 @media(prefers-reduced-motion:reduce){.guide-stage *,.guide-stage:before,.guide-demo *{animation:none!important}.guide-tips li{opacity:1}}
+
+/* ----- Tamanho 10 × 9,5 cm (6 por folha) — mesmo padrão vertical do 10 × 14 ----- */
+.layout-6 .promo-label{--k:1.1;height:95mm}
+.layout-6 .pl-name{-webkit-line-clamp:2;min-height:calc(8.2mm*var(--k))}
+.layout-6 .pl-prices{flex-direction:column;align-items:center;gap:calc(.6mm*var(--k))}
+.layout-6 .pl-from{flex-direction:row;gap:2mm;align-items:baseline;padding:0}
+@media print{#print-list.layout-6 .label-page{grid-auto-rows:95mm}}
+
+/* ----- Desconto em destaque ----- */
+.pl-off{width:calc(20mm*var(--k));height:calc(20mm*var(--k));top:calc(5.5mm*var(--k))}
+.pl-off b{font-size:calc(6.6mm*var(--k))}.pl-off small{font-size:calc(3mm*var(--k))}
+.pl-deal{display:flex;align-items:center;gap:calc(3mm*var(--k));margin:calc(1.2mm*var(--k)) calc(3.5mm*var(--k)) 0;flex:none}
+.pl-deal-pct{display:none}
+.pl-deal-save{display:inline-flex;align-items:baseline;gap:1.2mm;background:#d7141f;color:#fff;padding:.7mm 2.2mm;border-radius:1.2mm;font-family:Arial,sans-serif;font-weight:900;font-size:2.6mm;text-transform:uppercase}
+.pl-deal-save b{font-size:3.3mm;color:#ffd400}
+/* Layouts altos: troca o selo redondo por um bloco grande de desconto */
+.layout-4 .pl-off,.layout-6 .pl-off{display:none}
+.layout-4 .pl-name,.layout-6 .pl-name{margin-right:calc(3.5mm*var(--k))}
+.layout-4 .promo-label:not(.no-off) .pl-flag,.layout-6 .promo-label:not(.no-off) .pl-flag{padding-right:1mm}
+.layout-4 .pl-deal,.layout-6 .pl-deal{justify-content:center;margin-top:calc(2.4mm*var(--k))}
+.layout-4 .pl-deal-pct,.layout-6 .pl-deal-pct{display:flex;align-items:baseline;gap:1mm;background:#ffd400;color:#c40f19;border-radius:calc(2.6mm*var(--k));padding:calc(.8mm*var(--k)) calc(3mm*var(--k));transform:rotate(-3deg);box-shadow:0 1mm 0 #c8a600;font-family:"Arial Black",Arial,sans-serif}
+.layout-4 .pl-deal-pct b,.layout-6 .pl-deal-pct b{font-size:calc(10mm*var(--k));line-height:1;letter-spacing:-.4mm}
+.layout-4 .pl-deal-pct small,.layout-6 .pl-deal-pct small{font-size:calc(3.8mm*var(--k));font-weight:900}
+.layout-4 .pl-deal-save,.layout-6 .pl-deal-save{flex-direction:column;align-items:flex-start;gap:0;background:none;color:#151515;padding:0;font-size:calc(2.8mm*var(--k))}
+.layout-4 .pl-deal-save b,.layout-6 .pl-deal-save b{font-size:calc(5.2mm*var(--k));color:#d7141f}
+
+/* ----- Amarelo destaque: fundo branco (vai em papel amarelo) ----- */
+.theme-amarelo .pl-int{text-shadow:none}
+.theme-amarelo .pl-deal-pct{background:#d7141f!important;color:#fff!important;box-shadow:0 1mm 0 #8d0b12!important}
+.theme-amarelo .pl-deal-save b{color:#d7141f}
+
+/* ----- Black Friday: desconto ----- */
+.theme-black .pl-deal-pct{background:#f5c84c!important;color:#000!important;box-shadow:0 1mm 0 #a07c1c!important}
+.theme-black .pl-deal-save{background:#f5c84c;color:#000}.theme-black .pl-deal-save b{color:#000}
+.layout-4 .theme-black .pl-deal-save,.layout-6 .theme-black .pl-deal-save{background:none;color:#fff}
+.layout-4 .theme-black .pl-deal-save b,.layout-6 .theme-black .pl-deal-save b{color:#f5c84c}
+
+/* ----- Natal ----- */
+.theme-natal .pl-top{background:radial-gradient(circle,#ffffff80 0 .45mm,transparent .55mm) 0 0/5mm 5mm,radial-gradient(circle,#ffffff55 0 .3mm,transparent .4mm) 2.5mm 2.5mm/5mm 5mm,linear-gradient(100deg,#8f0014,#d4142a 60%,#e8394d)}
+.theme-natal .pl-top:after{background:repeating-linear-gradient(45deg,#0f7a3a 0 2mm,#fff 2mm 4mm)}
+.theme-natal .pl-flag:before{content:"🎄 "}
+.theme-natal .pl-flag{text-shadow:0 .5mm 0 #5c000d}
+.theme-natal .pl-off{background:#0f7a3a;color:#fff;box-shadow:0 .8mm 0 #075230,0 1.4mm 3mm #0004}
+.theme-natal .pl-to{color:#c40f19}.theme-natal .pl-int{text-shadow:0 .5mm 0 #0f7a3a55}
+.theme-natal .pl-pay{background:#0f7a3a;color:#fff}
+.theme-natal .pl-deal-save{background:#0f7a3a}
+.theme-natal .pl-deal-pct{background:#0f7a3a!important;color:#fff!important;box-shadow:0 1mm 0 #075230!important}
+.layout-4 .theme-natal .pl-deal-save,.layout-6 .theme-natal .pl-deal-save{background:none}
+.layout-4 .theme-natal .pl-deal-save b,.layout-6 .theme-natal .pl-deal-save b{color:#c40f19}
+
+/* ----- São João ----- */
+.theme-saojoao .pl-top{background:linear-gradient(100deg,#7a2e0c,#c2410c 55%,#f59e0b)}
+.theme-saojoao .pl-top:after{height:calc(3mm*var(--k));bottom:calc(-3mm*var(--k));background:repeating-linear-gradient(90deg,#e11d48 0 5mm,#facc15 5mm 10mm,#16a34a 10mm 15mm,#2563eb 15mm 20mm);-webkit-mask:conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) 0 0/5mm 100%;mask:conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) 0 0/5mm 100%}
+.theme-saojoao .pl-flag:before{content:"🌽 "}
+.theme-saojoao .pl-flag{color:#fff8dc;text-shadow:0 .5mm 0 #5a2108}
+.theme-saojoao .pl-name{margin-top:calc(4.6mm*var(--k))}
+.theme-saojoao .pl-off{background:#facc15;color:#7a2e0c;box-shadow:0 .8mm 0 #b88f00,0 1.4mm 3mm #0004}
+.theme-saojoao .pl-to{color:#c2410c}.theme-saojoao .pl-int{text-shadow:0 .5mm 0 #facc15}
+.theme-saojoao .pl-pay{background:#6b2d0b;color:#facc15}
+.theme-saojoao .pl-deal-save{background:#c2410c}
+.theme-saojoao .pl-deal-pct{background:#facc15!important;color:#7a2e0c!important;box-shadow:0 1mm 0 #b88f00!important}
+.layout-4 .theme-saojoao .pl-deal-save,.layout-6 .theme-saojoao .pl-deal-save{background:none}
+.layout-4 .theme-saojoao .pl-deal-save b,.layout-6 .theme-saojoao .pl-deal-save b{color:#c2410c}
+
+/* ----- Carnaval ----- */
+.theme-carnaval .pl-top{background:radial-gradient(circle,#facc15 0 .6mm,transparent .7mm) 0 0/6mm 6mm,radial-gradient(circle,#22d3ee 0 .5mm,transparent .6mm) 3mm 2mm/5mm 5mm,radial-gradient(circle,#a3e635 0 .45mm,transparent .55mm) 1mm 3.5mm/7mm 7mm,linear-gradient(100deg,#6d28d9,#c026d3 50%,#f43f5e)}
+.theme-carnaval .pl-top:after{background:linear-gradient(90deg,#facc15,#22d3ee,#a3e635,#f43f5e,#facc15)}
+.theme-carnaval .pl-flag:before{content:"🎭 "}
+.theme-carnaval .pl-flag{text-shadow:0 .5mm 0 #3b0764}
+.theme-carnaval .pl-off{background:#facc15;color:#6d28d9;box-shadow:0 .8mm 0 #b88f00,0 1.4mm 3mm #0004}
+.theme-carnaval .pl-to{color:#7b2cbf}.theme-carnaval .pl-int{text-shadow:0 .5mm 0 #facc15}
+.theme-carnaval .pl-pay{background:#6d28d9;color:#fff}
+.theme-carnaval .pl-deal-save{background:#c026d3}
+.theme-carnaval .pl-deal-pct{background:#facc15!important;color:#6d28d9!important;box-shadow:0 1mm 0 #b88f00!important}
+.layout-4 .theme-carnaval .pl-deal-save,.layout-6 .theme-carnaval .pl-deal-save{background:none}
+.layout-4 .theme-carnaval .pl-deal-save b,.layout-6 .theme-carnaval .pl-deal-save b{color:#7b2cbf}
+.layout-6 .pl-deal{margin-top:calc(1.4mm*var(--k))}.layout-6 .pl-deal-pct b{font-size:calc(8.4mm*var(--k))}.layout-6 .theme-saojoao .pl-name{margin-top:calc(4mm*var(--k))}

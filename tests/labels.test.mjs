@@ -48,7 +48,8 @@ test('código de barras EAN-13, EAN-8, UPC-A e Code 128',()=>{
 });
 import { labelThemes } from '../dist/label-domain.js';
 test('modelo e porcentagem são salvos e valores inválidos voltam ao padrão',()=>{
- assert.ok(Object.keys(labelThemes).length>=7);
+ assert.deepEqual(Object.keys(labelThemes),['classico','amarelo','black','natal','saojoao','carnaval']);
+ assert.equal(restoreLabels({theme:'verde'}).theme,'classico','modelo removido volta ao clássico');
  const s=restoreLabels({theme:'black',showPercent:false});assert.equal(s.theme,'black');assert.equal(s.showPercent,false);
  const d=restoreLabels({theme:'inexistente',showPercent:'nao'});assert.equal(d.theme,'classico');assert.equal(d.showPercent,true);
 });
@@ -57,4 +58,20 @@ test('etiqueta indica valor promocional manual só quando digitado à mão',asyn
  const item={id:'1',code:'283',barcode:'',name:'Papel',unit:'UN',price:3270,promo:2470,manual:true,copies:1},state={payment:{mode:'pix'},theme:'classico',showPercent:true};
  assert.ok(labelMarkup(item,state).includes('class="pl-manual"'));
  assert.ok(!labelMarkup({...item,manual:false},state).includes('class="pl-manual"'));
+});
+
+test('tamanhos 8, 6 e 4 por folha',async()=>{
+ const {labelLayouts,perPageFor}=await import('../dist/label-domain.js');const {labelPages}=await import('../dist/labels-ui.js');
+ assert.deepEqual(Object.keys(labelLayouts).sort(),['4','6','8']);assert.equal(perPageFor('6'),6);assert.equal(perPageFor('x'),8);
+ assert.equal(restoreLabels({layout:'6'}).layout,'6');assert.equal(restoreLabels({layout:'5'}).layout,'8');
+ const item={id:'1',code:'1',name:'A',unit:'UN',price:1000,promo:900,copies:13};
+ assert.deepEqual(labelPages({items:[item],layout:'6'}).map(p=>p.length),[6,6,1]);
+ assert.deepEqual(labelPages({items:[item],layout:'4'}).map(p=>p.length),[4,4,4,1]);
+});
+test('etiqueta mostra bloco de desconto com economia só quando a porcentagem está ligada',async()=>{
+ const {labelMarkup}=await import('../dist/labels-ui.js');
+ const item={id:'1',code:'1',barcode:'',name:'A',unit:'UN',price:19990,promo:16999,manual:false,copies:1};
+ const on=labelMarkup(item,{payment:{mode:'pix'},theme:'natal',showPercent:true});
+ assert.ok(on.includes('pl-deal'));assert.ok(on.includes('29,91'));assert.ok(on.includes('theme-natal'));assert.ok(on.includes('OFERTA DE NATAL'));
+ assert.ok(!labelMarkup(item,{payment:{mode:'pix'},theme:'classico',showPercent:false}).includes('pl-deal'));
 });

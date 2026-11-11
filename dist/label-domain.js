@@ -84,13 +84,20 @@ export function labelFromProduct(product, priceCentsFn, defaults) {
 
 export const labelThemes = {
  classico: { name: 'Clássico vermelho', title: 'OFERTA' },
- amarelo: { name: 'Amarelo destaque', title: 'PROMOÇÃO' },
- verde: { name: 'Verde fresco', title: 'APROVEITE' },
- azul: { name: 'Azul confiança', title: 'OFERTA' },
- queima: { name: 'Queima de estoque', title: 'QUEIMA DE ESTOQUE' },
+ amarelo: { name: 'Amarelo destaque (papel amarelo)', title: 'PROMOÇÃO' },
  black: { name: 'Black Friday', title: 'BLACK FRIDAY' },
- minimal: { name: 'Preto e branco (economiza tinta)', title: 'OFERTA' }
+ natal: { name: 'Natal', title: 'OFERTA DE NATAL' },
+ saojoao: { name: 'São João', title: 'ARRAIÁ DE OFERTAS' },
+ carnaval: { name: 'Carnaval', title: 'CARNAVAL DE OFERTAS' }
 };
+
+// Tamanhos na folha A4 (área útil de 200 × 287 mm).
+export const labelLayouts = {
+ '8': { perPage: 8, name: '10 × 7 cm — 8 por folha' },
+ '6': { perPage: 6, name: '10 × 9,5 cm — 6 por folha' },
+ '4': { perPage: 4, name: '10 × 14 cm — 4 por folha' }
+};
+export const perPageFor = layout => (labelLayouts[layout] || labelLayouts['8']).perPage;
 
 export const emptyLabels = () => ({ items: [], discount: 10, rounding: '99', payment: { mode: 'pix', installments: 6, text: '' }, validUntil: '', layout: '8', theme: 'classico', showPercent: true });
 
@@ -101,7 +108,7 @@ export function restoreLabels(saved) {
  if (saved.rounding in roundingModes) state.rounding = saved.rounding;
  if (saved.payment && saved.payment.mode in paymentModes) state.payment = { mode: saved.payment.mode, installments: clampInstallments(saved.payment.installments), text: String(saved.payment.text || '').slice(0, 80) };
  if (/^\d{4}-\d{2}-\d{2}$/.test(saved.validUntil || '')) state.validUntil = saved.validUntil;
- if (saved.layout === '4') state.layout = '4';
+ if (saved.layout in labelLayouts) state.layout = saved.layout;
  if (saved.theme in labelThemes) state.theme = saved.theme;
  if (saved.showPercent === false) state.showPercent = false;
  if (Array.isArray(saved.items)) state.items = saved.items.slice(0, 200).filter(i => i && Number.isSafeInteger(i.price) && Number.isSafeInteger(i.promo) && i.promo > 0 && i.promo < i.price).map(i => ({ id: String(i.id), code: String(i.code), barcode: String(i.barcode || ''), name: String(i.name), unit: String(i.unit || 'UN'), price: i.price, discount: Number(i.discount) || 0, rounding: i.rounding in roundingModes ? i.rounding : 'none', promo: i.promo, manual: !!i.manual, copies: Math.min(50, Math.max(1, Math.trunc(Number(i.copies) || 1))) }));

@@ -1,4 +1,4 @@
-import { roundingModes, paymentModes, labelThemes, clampInstallments, promoPrice, effectiveDiscount, paymentText, brl, priceParts, labelFromProduct, emptyLabels, restoreLabels } from './label-domain.js';
+import { roundingModes, paymentModes, labelThemes, labelLayouts, perPageFor, clampInstallments, promoPrice, effectiveDiscount, paymentText, brl, priceParts, labelFromProduct, emptyLabels, restoreLabels } from './label-domain.js';
 import { barcodeSvg } from './barcode.js';
 import { priceCents, escapeHtml } from './quote-domain.js';
 import { lookupMatches } from './lookup.js';
@@ -16,6 +16,7 @@ export function labelMarkup(item, state) {
   + '<div class="pl-top"><span class="pl-logo-wrap"><img class="pl-logo" src="assets/logo.png" alt=""></span><span class="pl-flag' + (title.length > 10 ? ' pl-flag-long' : '') + '">' + e(title) + '</span></div>'
   + (showOff ? '<span class="pl-off"><b>-' + off + '%</b><small>OFF</small></span>' : '')
   + '<div class="pl-name">' + e(item.name) + '</div>'
+  + (showOff ? '<div class="pl-deal"><span class="pl-deal-pct"><b>-' + off + '%</b><small>OFF</small></span><span class="pl-deal-save">Economize<b>' + brl(item.price - item.promo) + '</b></span></div>' : '')
   + '<div class="pl-prices"><div class="pl-from"><span>De</span><s>' + brl(item.price) + '</s></div>'
   + '<div class="pl-to"><span class="pl-por">POR</span><span class="pl-cur">R$</span><span class="pl-int' + (parts.whole.length >= 5 ? ' pl-int-s' : parts.whole.length >= 3 ? ' pl-int-m' : '') + '">' + e(parts.whole) + '</span><span class="pl-cents">' + e(parts.cents) + '<small>' + e(item.unit) + '</small></span></div></div>'
   + '<div class="pl-pay">' + e(paymentText(state.payment, item.promo)) + '</div>'
@@ -28,13 +29,13 @@ export function labelMarkup(item, state) {
 export function fitLabels(root) {
  for (const flag of root.querySelectorAll('.pl-flag')) {
   flag.style.fontSize = '';
-  let size = parseFloat(getComputedStyle(flag).fontSize), min = size * .35;
+  let size = parseFloat(getComputedStyle(flag).fontSize), min = size * .2;
   while (flag.scrollWidth > flag.clientWidth + 1 && size > min) { size *= .94; flag.style.fontSize = size + 'px'; }
  }
 }
 
 export function labelPages(state) {
- const perPage = state.layout === '4' ? 4 : 8, all = [];
+ const perPage = perPageFor(state.layout), all = [];
  for (const item of state.items) for (let i = 0; i < item.copies; i++) all.push(item);
  const pages = [];
  for (let i = 0; i < all.length; i += perPage) pages.push(all.slice(i, i + perPage));
@@ -51,6 +52,7 @@ export function setupLabels(getProducts = () => []) {
 
  for (const [value, mode] of Object.entries(roundingModes)) $('labels-rounding').add(new Option(mode.label, value));
  for (const [value, label] of Object.entries(paymentModes)) $('labels-payment').add(new Option(label, value));
+ $('labels-layout').replaceChildren(); for (const [value, layout] of Object.entries(labelLayouts)) $('labels-layout').add(new Option(layout.name, value));
 
  function add(product) {
   if (!profile?.active) return false;
@@ -75,7 +77,6 @@ export function setupLabels(getProducts = () => []) {
    button.onclick = () => { if (add(product)) { resetSearch(); $('labels-search').focus(); } };
    root.append(button);
   }
-  fitLabels(root);
  }
 
  function recalc(item) { if (!item.manual) item.promo = promoPrice(item.price, item.discount, item.rounding); }
@@ -106,7 +107,7 @@ export function setupLabels(getProducts = () => []) {
  }
 
  function preview() {
-  const count = state.items.reduce((sum, i) => sum + i.copies, 0), perPage = state.layout === '4' ? 4 : 8;
+  const count = state.items.reduce((sum, i) => sum + i.copies, 0), perPage = perPageFor(state.layout);
   $('labels-preview').className = 'labels-preview layout-' + state.layout;
   $('labels-preview').innerHTML = state.items.map(item => labelMarkup(item, state)).join('');
   fitLabels($('labels-preview'));
@@ -127,7 +128,12 @@ export function setupLabels(getProducts = () => []) {
    button.onclick = () => { state.theme = value; save(); preview(); };
    root.append(button);
   }
+  fitLabels(root);
  }
+ // Emojis dos títulos sazonais podem carregar depois: ajusta de novo quando as fontes chegam.
+ const refit = () => { fitLabels($('labels-preview')); fitLabels($('labels-themes')); };
+ document.fonts?.ready?.then(refit);
+ document.fonts?.addEventListener?.('loadingdone', refit);
 
  function render() {
   const root = $('labels-items'); root.replaceChildren();
@@ -161,7 +167,7 @@ export function setupLabels(getProducts = () => []) {
  $('labels-installments').onchange = () => { const v = Math.trunc(Number($('labels-installments').value)); state.payment.installments = clampInstallments(v); $('labels-installments').value = state.payment.installments; save(); preview(); };
  $('labels-payment-text').oninput = () => { state.payment.text = $('labels-payment-text').value.slice(0, 80); save(); preview(); };
  $('labels-valid').onchange = () => { state.validUntil = $('labels-valid').value; save(); preview(); };
- $('labels-layout').onchange = () => { state.layout = $('labels-layout').value === '4' ? '4' : '8'; save(); preview(); };
+ $('labels-layout').onchange = () => { state.layout = $('labels-layout').value in labelLayouts ? $('labels-layout').value : '8'; save(); preview(); };
  $('labels-show-percent').onchange = () => { state.showPercent = $('labels-show-percent').checked; save(); preview(); };
  $('labels-clear').onclick = async () => {
   if (!await confirmAction({ title: 'Apagar todas as etiquetas?', text: 'A lista de etiquetas será esvaziada. As configurações de desconto e pagamento continuam.', confirmLabel: 'Apagar etiquetas', danger: true })) return;
