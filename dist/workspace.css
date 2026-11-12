@@ -187,7 +187,7 @@ body[data-view=labels] #work-grid,body[data-view=labels] .stats,body[data-view=l
 /* Amarelo destaque */
 .theme-amarelo .pl-top{background:#151515}
 .theme-amarelo .pl-top:after{background:#d7141f}
-.theme-amarelo .pl-flag{color:#ffd400;text-shadow:none}
+.theme-amarelo .pl-flag{color:#fff;text-shadow:none}
 .theme-amarelo .pl-off{background:#d7141f;color:#fff;box-shadow:0 .8mm 0 #8d0b12,0 1.4mm 3mm #0004}
 .theme-amarelo .pl-to{color:#151515}.theme-amarelo .pl-int{text-shadow:0 .6mm 0 #fff}
 .theme-amarelo .pl-from,.theme-amarelo .pl-from s{color:#3b3200}
@@ -372,3 +372,6 @@ body[data-view=labels] #work-grid,body[data-view=labels] .stats,body[data-view=l
 .pl-prices .pl-por{font-size:calc(3.1mm*var(--k)*var(--pf))}
 .pl-prices .pl-from{font-size:calc(2.8mm*var(--k)*var(--pf))}
 .pl-prices .pl-from s{font-size:calc(4.2mm*var(--k)*var(--pf))}
+
+/* Clássico vermelho: título maior */
+.theme-classico .pl-flag{font-size:calc(9.4mm*var(--k));letter-spacing:.2mm}

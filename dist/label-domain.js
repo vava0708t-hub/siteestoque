@@ -83,7 +83,7 @@ export function labelFromProduct(product, priceCentsFn, defaults) {
 }
 
 export const labelThemes = {
- classico: { name: 'Clássico vermelho', title: 'OFERTA' },
+ classico: { name: 'Clássico vermelho', title: 'PROMOÇÃO' },
  amarelo: { name: 'Amarelo destaque (papel amarelo)', title: 'PROMOÇÃO' },
  black: { name: 'Black Friday', title: 'BLACK FRIDAY' },
  natal: { name: 'Natal', title: 'OFERTA DE NATAL' },
