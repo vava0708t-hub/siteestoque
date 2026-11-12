@@ -42,10 +42,12 @@ export function settleFit(root) { fitLabels(root); requestAnimationFrame(() => f
 function fitPrice(label) {
  const prices = label.querySelector('.pl-prices'), to = label.querySelector('.pl-to'), foot = label.querySelector('.pl-foot');
  if (!prices || !to || !foot) return;
+ // Escondida (outra aba aberta): não dá para medir, então não mexe no tamanho.
+ if (!label.getBoundingClientRect().width) return;
  const above = label.querySelector('.pl-deal') || label.querySelector('.pl-name');
  const fits = () => {
   const box = label.getBoundingClientRect(), gap = box.height * .015;
-  return foot.getBoundingClientRect().bottom <= box.bottom + .5 && to.getBoundingClientRect().right <= box.right - gap && prices.scrollWidth <= prices.clientWidth + 1 && prices.getBoundingClientRect().top >= above.getBoundingClientRect().bottom + gap;
+  return foot.getBoundingClientRect().bottom <= box.bottom + .5 && to.getBoundingClientRect().right <= box.right - gap && to.getBoundingClientRect().left >= box.left + gap && prices.scrollWidth <= prices.clientWidth + 1 && prices.getBoundingClientRect().top >= above.getBoundingClientRect().bottom + gap;
  };
  let low = 1, high = 2.4;
  prices.style.setProperty('--p', '1');
@@ -150,6 +152,8 @@ export function setupLabels(getProducts = () => []) {
  const refit = () => { fitLabels($('labels-preview')); fitLabels($('labels-themes')); };
  document.fonts?.ready?.then(refit);
  document.fonts?.addEventListener?.('loadingdone', refit);
+ // Ao abrir a aba, mede de novo: enquanto ela estava escondida o ajuste não pôde rodar.
+ document.addEventListener('app:view-change', event => { if (event.detail === 'labels') { settleFit($('labels-preview')); settleFit($('labels-themes')); } });
 
  function render() {
   const root = $('labels-items'); root.replaceChildren();
