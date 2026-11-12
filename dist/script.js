@@ -19,10 +19,10 @@ import { roles, units, canRequest, canComplete, validUsername, matchingProducts,
 const $ = id => document.getElementById(id);
 let client, session, profile, products = [], requests = [], signup = false;
 const listController = createListController(() => ({client,session,profile,barcodeFor:item=>itemBarcode(products,item),stockFor:item=>itemStockLabel(products,item),stockNegative:item=>itemStockNegative(products,item),hasProducts:()=>products.length>0,brands:()=>catalogSettings.brands(),aisles:()=>catalogSettings.aisles()}));
-const catalogSettings=createCatalogSettings(()=>({client,profile,notify:toast}),()=>listController.render());
+const catalogSettings=createCatalogSettings(()=>({client,profile,notify:toast}),()=>{listController.render();labels.refreshPayments();});
 const navigation=setupNavigation();
 const quote=setupQuote(()=>products,()=>({client,session,profile}));
-const labels=setupLabels(()=>products);
+const labels=setupLabels(()=>products,()=>catalogSettings.payments());
 const reports=setupReports(()=>({client,session,profile,products}));
 const help=setupHelp(view=>{history.replaceState(null,'','#'+view);navigation.show(view);});
 const lookup=setupLookup(()=>products,(product,detail)=>{if(!profile?.active)return;const add=el('button','Adicionar ao orçamento','secondary lookup-quote');add.type='button';add.onclick=()=>{if(quote.add(product)){add.textContent='✓ No orçamento';toast(product.nome+' adicionado ao orçamento.');}};const tag=el('button','Criar etiqueta de oferta','secondary lookup-quote');tag.type='button';tag.onclick=()=>{if(labels.add(product)){tag.textContent='✓ Etiqueta criada';toast('Etiqueta de '+product.nome+' criada na aba Etiquetas.');}};detail.append(add,tag);});

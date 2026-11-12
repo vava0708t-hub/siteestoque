@@ -75,3 +75,23 @@ test('etiqueta mostra bloco de desconto com economia só quando a porcentagem es
  assert.ok(on.includes('pl-deal'));assert.ok(on.includes('29,91'));assert.ok(on.includes('theme-natal'));assert.ok(on.includes('OFERTA DE NATAL'));
  assert.ok(!labelMarkup(item,{payment:{mode:'pix'},theme:'classico',showPercent:false}).includes('pl-deal'));
 });
+
+test('forma de pagamento: padrão, por produto e modos antigos',async()=>{
+ const {normalizePayment,paymentKey,paymentFromKey,itemPayment,DEFAULT_PAYMENTS}=await import('../dist/label-domain.js');
+ assert.deepEqual(normalizePayment({mode:'pix'}),{mode:'custom',text:'À vista no Pix ou dinheiro'},'modo antigo vira texto');
+ assert.deepEqual(normalizePayment({mode:'custom',text:'  Boleto 28 dias '}),{mode:'custom',text:'Boleto 28 dias'});
+ assert.equal(normalizePayment({mode:'custom',text:'  '}),null);
+ assert.equal(normalizePayment({mode:'xyz'}),null);
+ assert.deepEqual(normalizePayment({mode:'parcelado',installments:10}),{mode:'parcelado',installments:6});
+ assert.deepEqual(paymentFromKey(paymentKey({mode:'custom',text:'No boleto'})),{mode:'custom',text:'No boleto'});
+ assert.equal(paymentKey({mode:'parcelado',installments:3}),'parcelado');
+ const state={payment:{mode:'custom',text:'À vista',installments:3}};
+ assert.equal(itemPayment({payment:null},state),state.payment,'sem escolha usa a padrão');
+ assert.deepEqual(itemPayment({payment:{mode:'custom',text:'Só no Pix'}},state),{mode:'custom',text:'Só no Pix'});
+ assert.deepEqual(itemPayment({payment:{mode:'parcelado',installments:6}},state),{mode:'parcelado',installments:3},'parcelas seguem o limite do painel');
+ assert.match(paymentText(itemPayment({payment:{mode:'parcelado'}},state),99900),/^Em até 3x/);
+ const old=restoreLabels({payment:{mode:'debito',installments:4},items:[{id:'a',code:'1',name:'A',price:1000,promo:900,payment:{mode:'custom',text:'Só no Pix'}},{id:'b',code:'2',name:'B',price:1000,promo:900}]});
+ assert.deepEqual(old.payment,{mode:'custom',text:'No dinheiro, Pix ou débito',installments:4});
+ assert.deepEqual(old.items.map(i=>i.payment),[{mode:'custom',text:'Só no Pix'},null]);
+ assert.equal(emptyLabels().payment.text,DEFAULT_PAYMENTS[0]);
+});

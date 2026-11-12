@@ -55,6 +55,29 @@ export function installmentsFor(promo, chosen) {
  return Math.min(clampInstallments(chosen), Math.floor(promo / MIN_INSTALLMENT));
 }
 
+// Usadas enquanto o administrador não cadastra as formas de pagamento em Configurações.
+export const DEFAULT_PAYMENTS = ['À vista no Pix ou dinheiro', 'No dinheiro, Pix ou débito', 'À vista'];
+export const INSTALLMENT_LABEL = 'Parcelado sem juros no cartão (até 6x)';
+
+// Forma de pagamento guardada: { mode: 'parcelado', installments } ou { mode: 'custom', text }.
+// Os modos antigos (pix, débito, à vista) viram o texto que já mostravam.
+export function normalizePayment(payment, installments = MAX_INSTALLMENTS) {
+ if (!payment || typeof payment !== 'object') return null;
+ if (payment.mode === 'parcelado') return { mode: 'parcelado', installments: clampInstallments(payment.installments ?? installments) };
+ const text = payment.mode === 'custom' ? String(payment.text || '').trim().slice(0, 80) : payment.mode in paymentModes ? paymentModes[payment.mode] : '';
+ return text ? { mode: 'custom', text } : null;
+}
+export const paymentKey = payment => payment?.mode === 'parcelado' ? 'parcelado' : 'text:' + (payment?.text || '');
+export const paymentFromKey = (key, installments) => key === 'parcelado' ? { mode: 'parcelado', installments: clampInstallments(installments) } : { mode: 'custom', text: String(key).replace(/^text:/, '').slice(0, 80) };
+
+// Forma de pagamento de uma etiqueta: a do produto, se escolhida, senão a padrão.
+// O limite de parcelas é sempre o escolhido no painel.
+export function itemPayment(item, state) {
+ const base = state?.payment || { mode: 'custom', text: DEFAULT_PAYMENTS[0] };
+ if (!item?.payment) return base;
+ return item.payment.mode === 'parcelado' ? { mode: 'parcelado', installments: base.installments } : item.payment;
+}
+
 export function paymentText(payment, promo) {
  const mode = payment?.mode in paymentModes ? payment.mode : 'pix';
  if (mode === 'custom') return String(payment.text || '').trim().slice(0, 80) || 'Consulte as condições';
@@ -79,7 +102,7 @@ export function labelFromProduct(product, priceCentsFn, defaults) {
  const price = priceCentsFn(product.preco);
  if (price === null || price <= 0) throw new Error(product.nome + ': produto sem preço válido na planilha.');
  const discount = Number(defaults.discount) || 10, rounding = 'none';
- return { id: crypto.randomUUID(), code: String(product.codigo), barcode: String(product.codigo_barras || ''), name: String(product.nome), unit: String(product.unidade_original || product.unidade || 'UN'), price, discount, rounding, promo: promoPrice(price, discount, rounding), manual: false, copies: 1 };
+ return { id: crypto.randomUUID(), code: String(product.codigo), barcode: String(product.codigo_barras || ''), name: String(product.nome), unit: String(product.unidade_original || product.unidade || 'UN'), price, discount, rounding, promo: promoPrice(price, discount, rounding), manual: false, payment: null, copies: 1 };
 }
 
 export const labelThemes = {
@@ -99,7 +122,7 @@ export const labelLayouts = {
 };
 export const perPageFor = layout => (labelLayouts[layout] || labelLayouts['8']).perPage;
 
-export const emptyLabels = () => ({ items: [], discount: 10, rounding: 'none', payment: { mode: 'pix', installments: 6, text: '' }, validUntil: '', layout: '8', theme: 'classico', showPercent: true });
+export const emptyLabels = () => ({ items: [], discount: 10, rounding: 'none', payment: { mode: 'custom', text: DEFAULT_PAYMENTS[0], installments: 6 }, validUntil: '', layout: '8', theme: 'classico', showPercent: true });
 
 // Etiquetas antigas arredondadas voltam ao valor exato do desconto (preço manual é mantido).
 function unrounded(i) {
@@ -111,11 +134,12 @@ export function restoreLabels(saved) {
  const state = emptyLabels();
  if (!saved || typeof saved !== 'object') return state;
  if (Number(saved.discount) > 0 && Number(saved.discount) < 100) state.discount = Number(saved.discount);
- if (saved.payment && saved.payment.mode in paymentModes) state.payment = { mode: saved.payment.mode, installments: clampInstallments(saved.payment.installments), text: String(saved.payment.text || '').slice(0, 80) };
+ const installments = clampInstallments(saved.payment?.installments);
+ state.payment = { ...(normalizePayment(saved.payment) || state.payment), installments };
  if (/^\d{4}-\d{2}-\d{2}$/.test(saved.validUntil || '')) state.validUntil = saved.validUntil;
  if (saved.layout in labelLayouts) state.layout = saved.layout;
  if (saved.theme in labelThemes) state.theme = saved.theme;
  if (saved.showPercent === false) state.showPercent = false;
- if (Array.isArray(saved.items)) state.items = saved.items.slice(0, 200).filter(i => i && Number.isSafeInteger(i.price) && Number.isSafeInteger(i.promo) && i.promo > 0 && i.promo < i.price).map(i => ({ id: String(i.id), code: String(i.code), barcode: String(i.barcode || ''), name: String(i.name), unit: String(i.unit || 'UN'), price: i.price, discount: Number(i.discount) || 0, rounding: 'none', promo: unrounded(i), manual: !!i.manual, copies: Math.min(50, Math.max(1, Math.trunc(Number(i.copies) || 1))) }));
+ if (Array.isArray(saved.items)) state.items = saved.items.slice(0, 200).filter(i => i && Number.isSafeInteger(i.price) && Number.isSafeInteger(i.promo) && i.promo > 0 && i.promo < i.price).map(i => ({ id: String(i.id), code: String(i.code), barcode: String(i.barcode || ''), name: String(i.name), unit: String(i.unit || 'UN'), price: i.price, discount: Number(i.discount) || 0, rounding: 'none', promo: unrounded(i), manual: !!i.manual, payment: normalizePayment(i.payment), copies: Math.min(50, Math.max(1, Math.trunc(Number(i.copies) || 1))) }));
  return state;
 }

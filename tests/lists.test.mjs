@@ -149,6 +149,17 @@ test('PostgreSQL: migração, envio atômico, reenvio e permissões',async()=>{
  await db.query('select public.set_restock_quantity($1,2)',[second.id]);await db.query('select public.mark_restock_list_ready($1)',[quick]);
  assert.equal((await db.query('select status from public.restock_lists where id=$1',[quick])).rows[0].status,'pronta');
  assert.deepEqual((await db.query('select product_code,fulfilled_quantity,picked,unavailable,status from public.restock_requests where list_id=$1 order by product_code',[quick])).rows,[{product_code:'0001',fulfilled_quantity:3,picked:true,unavailable:false,status:'concluido'},{product_code:'0002',fulfilled_quantity:2,picked:false,unavailable:true,status:'concluido'}]);
+ // 018: formas de pagamento das etiquetas no mesmo cadastro de marcas e corredores.
+ await db.exec('reset role');await db.exec(await readFile(new URL('../supabase/018_payment_conditions.sql',import.meta.url),'utf8'));
+ await actor(seller);
+ assert.deepEqual((await db.query("select name from public.catalog_settings where kind='payment'")).rows.map(r=>r.name).sort((a,b)=>a.localeCompare(b,'pt-BR')),['À vista','À vista no Pix ou dinheiro','No dinheiro, Pix ou débito']);
+ await assert.rejects(()=>db.query("insert into public.catalog_settings(kind,name) values('payment','Boleto')"),'só o administrador cadastra');
+ await db.exec('reset role');await db.query("update public.profiles set role='admin' where id=$1",[other]);await actor(other);
+ await db.query("insert into public.catalog_settings(kind,name) values('payment',$1)",['B'.repeat(80)]);
+ await assert.rejects(()=>db.query("insert into public.catalog_settings(kind,name) values('brand',$1)",['B'.repeat(61)]),'marca continua com até 60');
+ await assert.rejects(()=>db.query("insert into public.catalog_settings(kind,name) values('payment',$1)",['B'.repeat(81)]));
+ await assert.rejects(()=>db.query("insert into public.catalog_settings(kind,name) values('payment','À VISTA')"),'sem repetir');
+ await db.exec('reset role');await db.query("update public.profiles set role='vendedor' where id=$1",[other]);
  }finally{await db.close();}
 });
 

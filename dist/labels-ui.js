@@ -1,4 +1,4 @@
-import { paymentModes, labelThemes, labelLayouts, perPageFor, clampInstallments, promoPrice, effectiveDiscount, paymentText, brl, priceParts, labelFromProduct, emptyLabels, restoreLabels } from './label-domain.js';
+import { DEFAULT_PAYMENTS, INSTALLMENT_LABEL, normalizePayment, paymentKey, paymentFromKey, itemPayment, labelThemes, labelLayouts, perPageFor, clampInstallments, promoPrice, effectiveDiscount, paymentText, brl, priceParts, labelFromProduct, emptyLabels, restoreLabels } from './label-domain.js';
 import { barcodeSvg } from './barcode.js';
 import { priceCents, escapeHtml } from './quote-domain.js';
 import { lookupMatches } from './lookup.js';
@@ -19,7 +19,7 @@ export function labelMarkup(item, state) {
   + (showOff ? '<div class="pl-deal"><span class="pl-deal-pct"><b>-' + off + '%</b><small>OFF</small></span><span class="pl-deal-save">Economize<b>' + brl(item.price - item.promo) + '</b></span></div>' : '')
   + '<div class="pl-prices"><div class="pl-from"><span>De</span><s>' + brl(item.price) + '</s></div>'
   + '<div class="pl-to"><span class="pl-por">POR</span><span class="pl-cur">R$</span><span class="pl-int' + (parts.whole.length >= 5 ? ' pl-int-s' : parts.whole.length >= 3 ? ' pl-int-m' : '') + '">' + e(parts.whole) + '</span><span class="pl-cents">' + e(parts.cents) + '<small>' + e(item.unit) + '</small></span></div></div>'
-  + '<div class="pl-pay">' + e(paymentText(state.payment, item.promo)) + '</div>'
+  + '<div class="pl-pay">' + e(paymentText(itemPayment(item, state), item.promo)) + '</div>'
   + '<div class="pl-foot">' + (barcodeSvg(item.barcode) ? '<div class="pl-code">' + barcodeSvg(item.barcode) + '<span>' + e(item.barcode) + '</span></div>' : '<span></span>')
   + '<span class="pl-meta">Cód. ' + e(item.code) + (item.manual ? '<br><b class="pl-manual">Manual</b>' : '') + (state.validUntil ? '<br>' + e(validLabel(state.validUntil)) : '') + '</span></div>'
   + '</article>';
@@ -64,7 +64,7 @@ export function labelPages(state) {
  return pages;
 }
 
-export function setupLabels(getProducts = () => []) {
+export function setupLabels(getProducts = () => [], getPayments = () => DEFAULT_PAYMENTS) {
  const $ = id => document.getElementById(id);
  const el = (tag, text, css) => { const n = document.createElement(tag); if (text != null) n.textContent = text; if (css) n.className = css; return n; };
  let profile = null, owner = null, state = emptyLabels();
@@ -72,7 +72,18 @@ export function setupLabels(getProducts = () => []) {
  const say = text => { $('labels-message').textContent = text; };
  const save = () => { try { localStorage.setItem(key(), JSON.stringify(state)); } catch { say('Não foi possível guardar as etiquetas neste navegador.'); } };
 
- for (const [value, label] of Object.entries(paymentModes)) $('labels-payment').add(new Option(label, value));
+ // Formas cadastradas em Configurações + parcelado (calculado). Uma forma que saiu do cadastro continua na lista de quem já usa.
+ function paymentOptions(select, current, withDefault) {
+  const names = getPayments().length ? getPayments() : DEFAULT_PAYMENTS;
+  select.replaceChildren();
+  if (withDefault) select.add(new Option('Igual à padrão', ''));
+  for (const name of names) select.add(new Option(name, 'text:' + name));
+  select.add(new Option(INSTALLMENT_LABEL, 'parcelado'));
+  if (current) { const key = paymentKey(current); if (![...select.options].some(o => o.value === key)) select.add(new Option(current.text, key)); select.value = key; }
+  else select.value = '';
+ }
+ // O limite de parcelas aparece quando alguma etiqueta é parcelada.
+ const showInstallments = () => { $('labels-installments-wrap').hidden = state.payment.mode !== 'parcelado' && !state.items.some(i => i.payment?.mode === 'parcelado'); };
  $('labels-layout').replaceChildren(); for (const [value, layout] of Object.entries(labelLayouts)) $('labels-layout').add(new Option(layout.name, value));
 
  function add(product) {
@@ -112,6 +123,8 @@ export function setupLabels(getProducts = () => []) {
   const field = (label, input) => { const wrap = el('label', label); wrap.append(input); fields.append(wrap); return input; };
   const discount = field('Desconto (%)', Object.assign(document.createElement('input'), { type: 'number', min: 0.01, max: 99.99, step: 0.01, value: item.discount }));
   const priceInput = field('Preço da oferta (R$)', Object.assign(document.createElement('input'), { type: 'number', min: 0.01, step: 0.01, value: (item.promo / 100).toFixed(2) }));
+  const payment = field('Pagamento', document.createElement('select')); payment.parentElement.className = 'label-pay-field'; paymentOptions(payment, item.payment, true);
+  payment.onchange = () => { item.payment = payment.value ? normalizePayment(paymentFromKey(payment.value)) : null; showInstallments(); save(); preview(); };
   const copies = field('Cópias', Object.assign(document.createElement('input'), { type: 'number', min: 1, max: 50, step: 1, value: item.copies }));
   const manualTag = el('span', 'Preço digitado à mão', 'label-manual'); manualTag.hidden = !item.manual;
   const update = (apply, input) => { try { apply(); refresh(); say(''); } catch (error) { say(error.message); input.value = input === priceInput ? (item.promo / 100).toFixed(2) : input === discount ? item.discount : input.value; } };
@@ -119,7 +132,7 @@ export function setupLabels(getProducts = () => []) {
   priceInput.onchange = () => update(() => { const v = Math.round(Number(priceInput.value) * 100); if (!Number.isSafeInteger(v) || v <= 0 || v >= item.price) throw new Error('O preço da oferta precisa ficar entre R$ 0,01 e o preço normal.'); item.promo = v; item.manual = true; }, priceInput);
   copies.onchange = () => update(() => { const v = Math.trunc(Number(copies.value)); if (!(v >= 1 && v <= 50)) throw new Error('Cópias de 1 a 50.'); item.copies = v; }, copies);
   const remove = el('button', 'Remover', 'ghost danger'); remove.type = 'button'; remove.setAttribute('aria-label', 'Remover etiqueta de ' + item.name);
-  remove.onclick = () => { state.items = state.items.filter(i => i.id !== item.id); save(); render(); };
+  remove.onclick = () => { state.items = state.items.filter(i => i.id !== item.id); showInstallments(); save(); render(); };
   fields.append(remove); card.append(head, fields, manualTag);
   return card;
  }
@@ -164,9 +177,9 @@ export function setupLabels(getProducts = () => []) {
 
  function fillSettings() {
   $('labels-discount').value = state.discount;
-  $('labels-payment').value = state.payment.mode; $('labels-installments').value = state.payment.installments; $('labels-payment-text').value = state.payment.text;
+  paymentOptions($('labels-payment'), state.payment, false); $('labels-installments').value = state.payment.installments;
   $('labels-valid').value = state.validUntil; $('labels-layout').value = state.layout; $('labels-show-percent').checked = state.showPercent !== false;
-  $('labels-installments-wrap').hidden = state.payment.mode !== 'parcelado'; $('labels-payment-text-wrap').hidden = state.payment.mode !== 'custom';
+  showInstallments();
  }
 
  $('labels-search').oninput = () => { const q = $('labels-search').value.trim(); showResults(q ? lookupMatches(getProducts(), q) : []); };
@@ -182,9 +195,8 @@ export function setupLabels(getProducts = () => []) {
   for (const item of state.items) { try { item.promo = promoPrice(item.price, state.discount); item.discount = state.discount; item.manual = false; } catch { skipped++; } }
   save(); render(); say(skipped ? skipped + ' etiqueta(s) não puderam usar esse desconto.' : 'Desconto aplicado a todas as etiquetas.');
  };
- $('labels-payment').onchange = () => { state.payment.mode = $('labels-payment').value; fillSettings(); save(); preview(); };
+ $('labels-payment').onchange = () => { state.payment = { ...paymentFromKey($('labels-payment').value, state.payment.installments), installments: state.payment.installments }; fillSettings(); save(); preview(); };
  $('labels-installments').onchange = () => { const v = Math.trunc(Number($('labels-installments').value)); state.payment.installments = clampInstallments(v); $('labels-installments').value = state.payment.installments; save(); preview(); };
- $('labels-payment-text').oninput = () => { state.payment.text = $('labels-payment-text').value.slice(0, 80); save(); preview(); };
  $('labels-valid').onchange = () => { state.validUntil = $('labels-valid').value; save(); preview(); };
  $('labels-layout').onchange = () => { state.layout = $('labels-layout').value in labelLayouts ? $('labels-layout').value : '8'; save(); preview(); };
  $('labels-show-percent').onchange = () => { state.showPercent = $('labels-show-percent').checked; save(); preview(); };
@@ -215,6 +227,8 @@ export function setupLabels(getProducts = () => []) {
    profile = next;
    if (owner !== id) { owner = id; state = emptyLabels(); if (owner) try { state = restoreLabels(JSON.parse(localStorage.getItem(key()) || 'null')); } catch { say('Não foi possível recuperar as etiquetas anteriores.'); } fillSettings(); resetSearch(); }
    render();
-  }
+  },
+  // Chamado quando o cadastro de formas de pagamento muda em Configurações.
+  refreshPayments() { fillSettings(); render(); }
  };
 }
