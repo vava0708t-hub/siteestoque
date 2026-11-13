@@ -376,3 +376,11 @@ body[data-view=labels] #work-grid,body[data-view=labels] .stats,body[data-view=l
 /* Clássico vermelho: título maior */
 .theme-classico .pl-flag{font-size:calc(9.4mm*var(--k));letter-spacing:.2mm}
 .label-row-fields .label-pay-field{grid-column:span 2}
+
+/* Relatórios: listas pedidas e consulta de item */
+.report-table td.report-list-refs{white-space:normal;min-width:180px;font-size:13px;line-height:1.5}
+.report-item td.report-list-number{font-weight:700;color:#6fe2b9;white-space:nowrap}
+.report-item td:nth-child(2){white-space:nowrap}
+.report-subtitle{margin:26px 0 4px;font-size:16px}
+.history-filters .reports-item-field{flex:2;min-width:220px}
+@media print{#print-list.report-print h2{font-size:13pt;margin:6mm 0 0}#print-list.report-print small{color:#444}}
