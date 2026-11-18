@@ -47,9 +47,9 @@ A pasta lib contém os auxiliares das funções e não é publicada como conteú
 No desenvolvimento, use `vercel dev`; servidor somente estático não executa os endpoints /api.
 
 ## Perfis e solicitações
-- Vendedor e repositor aprovados: solicitam produtos.
-- Estoquista aprovado: consulta e conclui reposições.
-- Admin aprovado: acompanha/conclui solicitações e gerencia acessos.
+- Vendedor e repositor aprovados: solicitam produtos e veem só as listas que eles mesmos criaram (migração 020).
+- Estoquista aprovado: vê todas as listas, consulta e conclui reposições.
+- Admin aprovado: vê todas as listas, acompanha/conclui solicitações e gerencia acessos.
 As permissões de dados são verificadas no banco, inclusive para sessões já abertas. Todos os aprovados pertencem à mesma loja.
 
 Campo de bipagem compatível com leitor USB/Bluetooth em modo teclado, enviando Enter após o código. Também aceita digitação e seleção; não usa câmera.
@@ -171,3 +171,9 @@ Execute `supabase/019_report_lookup.sql` após a 018. Ela:
 - cria a consulta "Consultar pedidos de um item": bipe ou digite o código, o código de barras ou palavras do nome e veja em quais listas, em que data, por quem e quanto foi pedido. Mostra até 300 pedidos e 100 dias de resumo por consulta.
 
 Os limites evitam consultas pesadas no Supabase. Vendedor e repositor veem só as próprias listas; estoque e administrador veem as da equipe.
+
+## Cada pessoa vê só as próprias listas
+Execute `supabase/020_own_lists_only.sql` após a 019. A partir dela, vendedor e repositor veem em Visão geral, Reposição e Histórico só as listas que eles criaram (e os itens delas). Estoquista e administrador continuam vendo todas. A regra fica no banco (RLS), então vale mesmo para quem tentar consultar direto. O aviso "este item já foi pedido em outra lista" continua olhando as listas pendentes da equipe, mostrando só o número e quem pediu, para evitar pedido repetido.
+
+## Avariados e vencidos
+Aba Avariados no menu. Bipe ou busque o produto danificado ou vencido (mesma busca da reposição: código, código de barras ou nome); descrição, código e preço vêm da planilha. O motivo escolhido no painel (Avariado / danificado, Vencido ou Outro motivo) vale para os próximos bipados, e cada item pode ter quantidade, unidade, motivo, validade e observação ajustados. Bipar de novo o mesmo produto soma a quantidade. O resumo mostra itens, vencidos, quantidade por unidade e o valor pelo preço de venda. A impressão em A4 traz logo, data, responsável, fornecedor, a tabela de itens com totais e os campos de assinatura do comprador e do fiscal (com o nome, se preenchido, e data). A lista fica salva só neste navegador, por usuário, até clicar em Nova lista. Não exige migração.

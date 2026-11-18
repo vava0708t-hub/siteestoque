@@ -384,3 +384,27 @@ body[data-view=labels] #work-grid,body[data-view=labels] .stats,body[data-view=l
 .report-subtitle{margin:26px 0 4px;font-size:16px}
 .history-filters .reports-item-field{flex:2;min-width:220px}
 @media print{#print-list.report-print h2{font-size:13pt;margin:6mm 0 0}#print-list.report-print small{color:#444}}
+
+/* ----- Avariados e vencidos ----- */
+.damaged-screen .damaged-row{border-left:4px solid #e0a43a}
+.damaged-screen .damaged-row.is-expired{border-left-color:#ff6b6b}
+.damaged-badge{display:inline-block;margin-top:4px;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:700;background:#3a2e14;color:#ffcf73}
+.damaged-row.is-expired .damaged-badge{background:#3b1717;color:#ff9b9b}
+.damaged-row-fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;align-items:end;margin-top:10px}
+.damaged-row-fields label{margin:0;min-width:0}.damaged-row-fields input,.damaged-row-fields select{width:100%}
+.damaged-row-fields .damaged-notes{grid-column:span 2}.damaged-row-fields button{justify-self:end}
+.damaged-warning{color:#ffcf73}
+@media(max-width:560px){.damaged-row-fields{grid-template-columns:1fr 1fr}.damaged-row-fields button{grid-column:1/-1;justify-self:stretch;min-height:44px}}
+@media print{
+ #print-list.damaged-print .damaged-table th:nth-child(1){width:7mm}#print-list.damaged-print .damaged-table th:nth-child(4){width:11mm}#print-list.damaged-print .damaged-table th:nth-child(5){width:13mm}
+ #print-list.damaged-print .damaged-table th:nth-child(3){width:auto}#print-list.damaged-print .damaged-table th:nth-child(2){width:24mm}
+ #print-list.damaged-print .damaged-table th:nth-child(6),#print-list.damaged-print .damaged-table th:nth-child(7){width:20mm}
+ #print-list.damaged-print .damaged-table th:nth-child(8),#print-list.damaged-print .damaged-table th:nth-child(9){width:20mm}
+ #print-list.damaged-print td,#print-list.damaged-print th{font-size:9pt;padding:2mm 1.5mm}
+ #print-list.damaged-print tfoot td{border:1px solid #666;background:#f2f2f2}
+ #print-list.damaged-print small{color:#444}
+ .damaged-signatures{display:grid;grid-template-columns:1fr 1fr;gap:16mm;margin-top:22mm;break-inside:avoid;page-break-inside:avoid}
+ .damaged-sign{display:flex;flex-direction:column;gap:2mm;font-size:10pt}
+ .damaged-sign-line{border-top:1px solid #000;margin-bottom:1mm}
+ .damaged-sign strong{font-size:11pt}
+}

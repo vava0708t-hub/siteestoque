@@ -1,6 +1,7 @@
 import {setupNavigation} from './navigation.js';
 import {setupQuote} from './quote-ui.js';
 import {setupLabels} from './labels-ui.js';
+import {setupDamaged} from './damaged-ui.js';
 import {setupReports} from './reports.js';
 import {setupHelp} from './help.js';
 import {playBeep} from './beep.js';
@@ -22,6 +23,7 @@ const listController = createListController(() => ({client,session,profile,barco
 const catalogSettings=createCatalogSettings(()=>({client,profile,notify:toast}),()=>{listController.render();labels.refreshPayments();});
 const navigation=setupNavigation();
 const quote=setupQuote(()=>products,()=>({client,session,profile}));
+const damaged=setupDamaged(()=>products);
 const labels=setupLabels(()=>products,()=>catalogSettings.payments());
 const reports=setupReports(()=>({client,session,profile,products}));
 const help=setupHelp(view=>{history.replaceState(null,'','#'+view);navigation.show(view);});
@@ -37,7 +39,7 @@ function mode(value) {
  document.dispatchEvent(new CustomEvent('auth:mode', { detail: value }));
 }
 $('login-tab').onclick = () => mode(false); $('signup-tab').onclick = () => mode(true);
-function clearSession() { camera.close(); navigation.configure(null);quote.configure(null,null);labels.configure(null,null);reports.configure(null,null); listController.reset(); session = profile = null; requests = []; products = []; lookup.reset(); $('requests').replaceChildren(); $('admin-users').replaceChildren(); $('workspace').hidden = true; $('auth').hidden = false; $('logout').hidden = true; $('settings-toggle').hidden = true; $('account-panel').open = false; $('profile-form').reset(); $('password-form').reset(); }
+function clearSession() { camera.close(); navigation.configure(null);quote.configure(null,null);labels.configure(null,null);damaged.configure(null,null);reports.configure(null,null); listController.reset(); session = profile = null; requests = []; products = []; lookup.reset(); $('requests').replaceChildren(); $('admin-users').replaceChildren(); $('workspace').hidden = true; $('auth').hidden = false; $('logout').hidden = true; $('settings-toggle').hidden = true; $('account-panel').open = false; $('profile-form').reset(); $('password-form').reset(); }
 async function showSession(next) {
  if (!next) { clearSession(); return; } session = next;
  const { data, error } = await client.from('profiles').select('*').eq('id', next.user.id).single();
@@ -49,7 +51,7 @@ async function showSession(next) {
  $('request-panel').hidden = !profile.active || !canRequest(profile.role);
  $('work-grid').classList.toggle('single-column', $('request-panel').hidden);
  $('admin-panel').hidden = !profile.active || profile.role !== 'admin';
- quote.configure(profile,session.user.id);labels.configure(profile,session.user.id);reports.configure(profile,session.user.id);help.configure(profile);navigation.configure(profile);
+ quote.configure(profile,session.user.id);labels.configure(profile,session.user.id);damaged.configure(profile,session.user.id);reports.configure(profile,session.user.id);help.configure(profile);navigation.configure(profile);
  await refresh();
 }
 async function refresh() {
