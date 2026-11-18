@@ -160,6 +160,23 @@ test('PostgreSQL: migração, envio atômico, reenvio e permissões',async()=>{
  await assert.rejects(()=>db.query("insert into public.catalog_settings(kind,name) values('payment',$1)",['B'.repeat(81)]));
  await assert.rejects(()=>db.query("insert into public.catalog_settings(kind,name) values('payment','À VISTA')"),'sem repetir');
  await db.exec('reset role');await db.query("update public.profiles set role='vendedor' where id=$1",[other]);
+ // 020: vendedor e repositor veem só as próprias listas; estoque e admin veem todas.
+ await db.exec(await readFile(new URL('../supabase/020_own_lists_only.sql',import.meta.url),'utf8'));
+ await actor(seller);await submit('60000000-0000-4000-8000-000000000021',[{...item,product_code:'0001'}]);
+ const mine='60000000-0000-4000-8000-000000000020';await actor(other);await submit(mine,[{...item,product_code:'0001'}]);
+ const count=async(table,where='')=>(await db.query('select count(*)::int n from public.'+table+where)).rows[0].n;
+ await db.exec('reset role');const allLists=await count('restock_lists'),allItems=await count('restock_requests'),ownBySeller=(await db.query('select count(*)::int n from public.restock_lists where created_by=$1',[seller])).rows[0].n;
+ await actor(other);
+ assert.deepEqual((await db.query('select id from public.restock_lists')).rows.map(r=>r.id),[mine],'vendedor vê só a própria lista');
+ assert.equal(await count('restock_requests'),1,'e só os itens dela');
+ assert.ok((await db.query('select * from public.find_restock_duplicates($1,$2,$3)',['0001',item.aisle,mine])).rows.length>0,'aviso de item repetido continua olhando a equipe');
+ await actor(seller);assert.equal(await count('restock_lists'),ownBySeller);
+ assert.equal((await db.query('select count(*)::int n from public.restock_lists where created_by<>$1',[seller])).rows[0].n,0);
+ await db.exec('reset role');await db.query("update public.profiles set role='repositor' where id=$1",[other]);await actor(other);
+ assert.equal(await count('restock_lists'),1,'repositor também');
+ await actor(stock);assert.equal(await count('restock_lists'),allLists,'estoquista vê todas');assert.equal(await count('restock_requests'),allItems);
+ await actor(blocked);assert.equal(await count('restock_lists'),0);
+ await db.exec('reset role');await db.query("update public.profiles set role='vendedor' where id=$1",[other]);
  }finally{await db.close();}
 });
 
