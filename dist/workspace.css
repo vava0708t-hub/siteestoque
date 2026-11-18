@@ -408,3 +408,4 @@ body[data-view=labels] #work-grid,body[data-view=labels] .stats,body[data-view=l
  .damaged-sign-line{border-top:1px solid #000;margin-bottom:1mm}
  .damaged-sign strong{font-size:11pt}
 }
+body[data-view=damaged] #work-grid,body[data-view=damaged] .stats,body[data-view=damaged] #account-panel,body[data-view=damaged] #admin-panel{display:none!important}
